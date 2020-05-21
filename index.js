@@ -165,13 +165,15 @@ const loadMIDIFile = async function () {
 
         let validTune = false;
 
+        // FIXME: can be infinite loop...
         while(!validTune) {
             const musicStart = Math.floor(Math.random() * (score.length - numberNotes));
             generatedScore = score.slice(musicStart, musicStart + numberNotes);
             validTune = true;
+            const transposedTune = transpose(generatedScore);
             for (let k = 0; k < generatedScore.length; k++) {
-                if (MIDI.keyToNote[generatedScore[k]] < MIDI.keyToNote[lowestNote]
-                    || MIDI.keyToNote[generatedScore[k]] > MIDI.keyToNote[highestNote]) {
+                if (MIDI.keyToNote[transposedTune[k]] < MIDI.keyToNote[lowestNote]
+                    || MIDI.keyToNote[transposedTune[k]] > MIDI.keyToNote[highestNote]) {
                     validTune = false;
                 }
             }
