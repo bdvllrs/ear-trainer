@@ -85,12 +85,12 @@ showFirstNoteInput.addEventListener("change", function (e) {
 });
 
 lowestNoteInput.addEventListener("change", function (e) {
-    lowestNote = Math.max(e.target.value, 2);
+    lowestNote = e.target.value;
     localStorage.setItem("lowest-note", lowestNote);
 });
 
 highestNoteInput.addEventListener("change", function (e) {
-    highestNote = Math.max(e.target.value, 10);
+    highestNote = e.target.value;
     localStorage.setItem("highest-note", highestNote);
 });
 
