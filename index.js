@@ -85,13 +85,21 @@ showFirstNoteInput.addEventListener("change", function (e) {
 });
 
 lowestNoteInput.addEventListener("change", function (e) {
-    lowestNote = e.target.value;
-    localStorage.setItem("lowest-note", lowestNote);
+    if (Object.keys(MIDI.keyToNote).includes(e.target.value)) {
+        lowestNote = e.target.value;
+        localStorage.setItem("lowest-note", lowestNote);
+    } else {
+        e.target.value = lowestNote;
+    }
 });
 
 highestNoteInput.addEventListener("change", function (e) {
-    highestNote = e.target.value;
-    localStorage.setItem("highest-note", highestNote);
+    if (Object.keys(MIDI.keyToNote).includes(e.target.value)) {
+        highestNote = e.target.value;
+        localStorage.setItem("highest-note", highestNote);
+    } else {
+        e.target.value = highestNote;
+    }
 });
 
 transposeInput.addEventListener("change", function (e) {
