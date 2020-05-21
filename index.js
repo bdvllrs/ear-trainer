@@ -95,9 +95,11 @@ highestNoteInput.addEventListener("change", function (e) {
 });
 
 transposeInput.addEventListener("change", function (e) {
-    if (Object.keys(MIDI.keyToNote).includes(e.target.value + '4')){
+    if (Object.keys(MIDI.keyToNote).includes(e.target.value)){
         transposeInstrument = e.target.value;
         localStorage.setItem("transpose", transposeInstrument);
+    } else {
+        e.target.value = transposeInstrument;
     }
 });
 
@@ -133,7 +135,7 @@ const sample = function (list) {
 
 const transpose = function (notes) {
     const concertPitch = MIDI.keyToNote['C4'];
-    const transposePitch = MIDI.keyToNote[transposeInstrument + "3"];
+    const transposePitch = MIDI.keyToNote[transposeInstrument];
     const difference = concertPitch - transposePitch;
     return notes.map(function (note) {
         return MIDI.noteToKey[MIDI.keyToNote[note] + difference];
