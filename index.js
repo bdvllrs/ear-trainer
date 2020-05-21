@@ -1,3 +1,4 @@
+const localStorage =  window.localStorage;
 const nextMusic = document.getElementById('next');
 const replayMusic = document.getElementById('replay');
 const noteHolder = document.getElementById("notes");
@@ -12,6 +13,7 @@ let showFirstNote = showFirstNoteInput.checked;
 let showSolution = false;
 let numberNotes = parseInt(numberNoteInput.value);
 let currentNote = 0;
+let playing = false;
 let highestNote = highestNoteInput.value;
 let lowestNote = lowestNoteInput.value;
 let transposeInstrument = transposeInput.value;
@@ -30,6 +32,23 @@ if (showFirstNote) {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// Load settings from local storage.
+if (localStorage.getItem("transpose")) {
+    transposeInstrument = localStorage.getItem("transpose");
+    transposeInput.value = transposeInstrument;
+}
+
+if (localStorage.getItem("lowest-note")) {
+    lowestNote = localStorage.getItem("lowest-note");
+    lowestNoteInput.value = lowestNote;
+}
+
+if (localStorage.getItem("highest-note")) {
+    highestNote = localStorage.getItem("highest-note");
+    highestNoteInput.value = highestNote;
+}
+
 
 numberNoteInput.addEventListener("change", async function (e) {
     numberNotes = parseInt(e.target.value);
@@ -66,15 +85,20 @@ showFirstNoteInput.addEventListener("change", function (e) {
 });
 
 lowestNoteInput.addEventListener("change", function (e) {
-    lowestNote = e.target.value;
+    lowestNote = Math.max(e.target.value, 2);
+    localStorage.setItem("lowest-note", lowestNote);
 });
 
 highestNoteInput.addEventListener("change", function (e) {
-    highestNote = e.target.value;
+    highestNote = Math.max(e.target.value, 10);
+    localStorage.setItem("highest-note", highestNote);
 });
 
 transposeInput.addEventListener("change", function (e) {
-    transposeInstrument = e.target.value;
+    if (Object.keys(MIDI.keyToNote).includes(e.target.value + '4')){
+        transposeInstrument = e.target.value;
+        localStorage.setItem("transpose", transposeInstrument);
+    }
 });
 
 revealAnswerElement.addEventListener("click", function (e) {
@@ -264,6 +288,7 @@ const generateRandomExcerpt = function () {
 
 const playExcerpt = async function () {
     MIDI.setVolume(0, 127);
+    playing = true;
     for (let k = 0; k < generatedScore.length; k++) {
         let note = MIDI.keyToNote[generatedScore[k]]
         noteBullets[k].classList.add('active');
@@ -272,6 +297,7 @@ const playExcerpt = async function () {
         await sleep(1000);
         noteBullets[k].classList.remove('active');
     }
+    playing = false;
 }
 
 window.onload = function () {
@@ -295,14 +321,15 @@ window.onload = function () {
 
             nextMusic.addEventListener("click", async function (e) {
                 showSolution = false;
+                revealAnswerElement.classList.add('loading')
                 await loadMIDIFile()
             });
 
             replayMusic.addEventListener("click", async function (e) {
-                e.preventDefault();
-                // playMIDIFile()
-                await playExcerpt()
-                revealAnswerElement.classList.remove('loading')
+                if (!playing) {
+                    await playExcerpt()
+                    revealAnswerElement.classList.remove('loading')
+                }
             });
         }
     });
