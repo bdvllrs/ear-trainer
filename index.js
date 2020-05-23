@@ -25,7 +25,7 @@ const {keyToNote, noteToKey} = makeKeyToNote();
 
 const synth = new Tone.Sampler(Soundfont, function () {
     // Get the scores
-    fetch("midi/scores.json")
+    fetch("scores.json")
         .then(async function (resp) {
             scores = await resp.json();
             console.log("Tunes fetched.");

@@ -1,5 +1,7 @@
 MIDI.js
 soundfont
 fontawesome
-midi
 .idea
+midi/*
+!midi/.gitkeep
+scores.json

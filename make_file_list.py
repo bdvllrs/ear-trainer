@@ -25,5 +25,5 @@ if __name__ == "__main__":
             "notes": song_notes
         })
 
-    with open(midi_path / "scores.json", "w") as midi_tunes:
+    with open(midi_path / "../scores.json", "w") as midi_tunes:
         json.dump(files, midi_tunes)
