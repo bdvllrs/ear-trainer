@@ -44,6 +44,10 @@ body, html {
     color: #FFF;
 }
 
+.actions button::-moz-focus-inner {
+    border: 0;
+}
+
 .actions button.loading {
     background-color: var(--light-grey-color);
     cursor: default;
