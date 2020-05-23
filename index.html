@@ -72,27 +72,18 @@
     </p>
     <p>This uses the following tools:</p>
     <ul>
-        <li>MIDI.js for handling MIDI files.</li>
+        <li>Tone.js for sound synthesizer.</li>
         <li>vexflow to generate music score.</li>
         <li>fontawesome for the icons.</li>
+        <li>MIDI.js for the piano soundfont.</li>
     </ul>
 </div>
 
-<script src="MIDI.js/inc/shim/Base64.js" type="text/javascript"></script>
-<script src="MIDI.js/inc/shim/Base64binary.js" type="text/javascript"></script>
-<script src="MIDI.js/inc/shim/WebAudioAPI.js" type="text/javascript"></script>
-
-<script src="MIDI.js/inc/jasmid/stream.js"></script>
-<script src="MIDI.js/inc/jasmid/midifile.js"></script>
-<script src="MIDI.js/inc/jasmid/replayer.js"></script>
-
-<script src="MIDI.js/build/MIDI.min.js" type="text/javascript"></script>
-
-<script src="MIDI.js/js/util/dom_request_xhr.js" type="text/javascript"></script>
-<script src="MIDI.js/js/util/dom_request_script.js" type="text/javascript"></script>
-
 <script src="https://unpkg.com/vexflow@3.0.9/releases/vexflow-min.js"></script>
+<script src="https://unpkg.com/tone@13.8.25/build/Tone.js"></script>
 
+
+<script src="soundfont.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

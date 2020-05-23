@@ -1,25 +1,44 @@
-const localStorage =  window.localStorage;
-const nextMusic = document.getElementById('next');
-const replayMusic = document.getElementById('replay');
-const noteHolder = document.getElementById("notes");
-const revealAnswerElement = document.getElementById("reveal-answer");
-const numberNoteInput = document.getElementById("number-notes");
+const localStorage = window.localStorage;
+// DOM elements
+const nextMusicButton = document.getElementById('next');
+const replayMusicButton = document.getElementById('replay');
+const solutionButton = document.getElementById("reveal-answer");
+const notesElement = document.getElementById("notes");
 const transcriptElement = document.getElementById("transcript");
 const showFirstNoteInput = document.getElementById("show-first-notes");
+const numberNoteInput = document.getElementById("number-notes");
 const lowestNoteInput = document.getElementById("lowest-note");
 const highestNoteInput = document.getElementById("highest-note");
 const transposeInput = document.getElementById("transpose");
+
 let showFirstNote = showFirstNoteInput.checked;
 let showSolution = false;
 let numberNotes = parseInt(numberNoteInput.value);
-let currentNote = 0;
 let playing = false;
 let highestNote = highestNoteInput.value;
 let lowestNote = lowestNoteInput.value;
 let transposeInstrument = transposeInput.value;
-let player;
-let availableFiles;
 let noteBullets = [];
+let scores;
+
+const {keyToNote, noteToKey} = makeKeyToNote();
+
+const synth = new Tone.Sampler(Soundfont, function () {
+    // Get the scores
+    fetch("midi/scores.json")
+        .then(async function (resp) {
+            scores = await resp.json();
+            console.log("Tunes fetched.");
+
+            nextMusicButton.classList.remove('loading')
+            addNoteElements();
+            generateScore();
+        })
+        .catch(function (err) {
+            console.log(err);
+        });
+}).toMaster();
+
 
 let generatedScore = [];
 
@@ -31,6 +50,25 @@ if (showFirstNote) {
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function makeKeyToNote() {
+    let keyToNote = {
+        "A0": 21, "Bb0": 22, "B0": 23, "C8": 108
+    };
+    let noteToKey = {
+        21: "A0", 22: "Bb0", 23: "B0", 108: "C8"
+    };
+    const notes = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+    let curNote = 24;
+    for (let k = 0; k <= 7; k++) {
+        notes.forEach(function (note) {
+            keyToNote[note + k.toString()] = curNote;
+            noteToKey[curNote] = note + k.toString();
+            curNote++;
+        });
+    }
+    return {keyToNote, noteToKey};
 }
 
 // Load settings from local storage.
@@ -59,20 +97,20 @@ numberNoteInput.addEventListener("change", async function (e) {
         let toRemove = noteBullets.length - numberNotes;
         for (let k = 0; k < toRemove; k++) {
             let removedChild = noteBullets.pop();
-            noteHolder.removeChild(removedChild);
+            notesElement.removeChild(removedChild);
         }
     }
     if (noteBullets && noteBullets.length < numberNotes) {
         let toAdd = numberNotes - noteBullets.length;
         for (let k = 0; k < toAdd; k++) {
             let li = document.createElement("li");
-            noteHolder.appendChild(li);
+            notesElement.appendChild(li);
             noteBullets.push(li);
         }
     }
 
     showSolution = false;
-    await loadMIDIFile()
+    generateScore();
 });
 
 showFirstNoteInput.addEventListener("change", function (e) {
@@ -85,7 +123,7 @@ showFirstNoteInput.addEventListener("change", function (e) {
 });
 
 lowestNoteInput.addEventListener("change", function (e) {
-    if (Object.keys(MIDI.keyToNote).includes(e.target.value)) {
+    if (Object.keys(keyToNote).includes(e.target.value)) {
         lowestNote = e.target.value;
         localStorage.setItem("lowest-note", lowestNote);
     } else {
@@ -94,7 +132,7 @@ lowestNoteInput.addEventListener("change", function (e) {
 });
 
 highestNoteInput.addEventListener("change", function (e) {
-    if (Object.keys(MIDI.keyToNote).includes(e.target.value)) {
+    if (Object.keys(keyToNote).includes(e.target.value)) {
         highestNote = e.target.value;
         localStorage.setItem("highest-note", highestNote);
     } else {
@@ -103,7 +141,7 @@ highestNoteInput.addEventListener("change", function (e) {
 });
 
 transposeInput.addEventListener("change", function (e) {
-    if (Object.keys(MIDI.keyToNote).includes(e.target.value)){
+    if (Object.keys(keyToNote).includes(e.target.value)) {
         transposeInstrument = e.target.value;
         localStorage.setItem("transpose", transposeInstrument);
     } else {
@@ -111,7 +149,7 @@ transposeInput.addEventListener("change", function (e) {
     }
 });
 
-revealAnswerElement.addEventListener("click", function (e) {
+solutionButton.addEventListener("click", function (e) {
     showSolution = !showSolution;
 
     if (!showFirstNote && showSolution)
@@ -124,7 +162,20 @@ revealAnswerElement.addEventListener("click", function (e) {
     }
 });
 
-const resetNoteBullets = function () {
+nextMusicButton.addEventListener("click", async function (e) {
+    showSolution = false;
+    solutionButton.classList.add('loading')
+    await generateScore();
+});
+
+replayMusicButton.addEventListener("click", async function (e) {
+    if (!playing) {
+        await playExcerpt()
+        solutionButton.classList.remove('loading')
+    }
+});
+
+function resetNoteBullets() {
     if (noteBullets) {
         noteBullets.forEach(function (bullet) {
             bullet.classList.remove("active");
@@ -132,101 +183,73 @@ const resetNoteBullets = function () {
     }
 }
 
-const getAvailableFiles = async function () {
-    const jsonFile = await fetch("midi/midi_files.json");
-    availableFiles = await jsonFile.json();
-}
-
-const sample = function (list) {
+function sample(list) {
     return list[Math.floor(Math.random() * list.length)];
 }
 
-const transpose = function (notes) {
-    const concertPitch = MIDI.keyToNote['C4'];
-    const transposePitch = MIDI.keyToNote[transposeInstrument];
+function transpose(notes) {
+    const concertPitch = keyToNote['C4'];
+    const transposePitch = keyToNote[transposeInstrument];
     const difference = concertPitch - transposePitch;
     return notes.map(function (note) {
-        return MIDI.noteToKey[MIDI.keyToNote[note] + difference];
+        return noteToKey[keyToNote[note] + difference];
     })
 }
 
-const loadMIDIFile = async function () {
-    if (!availableFiles) {
-        await getAvailableFiles();
-    }
-
-    const fileURL = sample(availableFiles);
-
+function generateScore() {
     midiLoaded = false;
-    replayMusic.classList.add('loading')
-    player.loadFile("midi/" + fileURL, function () {
+    replayMusicButton.classList.add('loading')
+    let validTune = false;
+    while (!validTune) {
+        const tune = sample(scores).notes;
+        const musicStart = Math.floor(Math.random() * (tune.length - numberNotes));
+        console.log(tune);
 
-        let score = [];
-
-
-        player.data.forEach(function (data) {
-            data.forEach(function (event) {
-                if (event['event'] && event['event']['type'] === "channel" &&
-                    event['event']['subtype'] === "noteOn") {
-                    score.push(MIDI.noteToKey[event['event']['noteNumber']])
-                }
-            });
+        generatedScore = tune.slice(musicStart, musicStart + numberNotes);
+        console.log(generatedScore);
+        generatedScore = generatedScore.map(function (n) {
+            return noteToKey[n];
         });
+        console.log(generatedScore);
 
-        let validTune = false;
-
-        // FIXME: can be infinite loop...
-        while(!validTune) {
-            const musicStart = Math.floor(Math.random() * (score.length - numberNotes));
-            generatedScore = score.slice(musicStart, musicStart + numberNotes);
-            validTune = true;
-            const transposedTune = transpose(generatedScore);
-            for (let k = 0; k < generatedScore.length; k++) {
-                if (MIDI.keyToNote[transposedTune[k]] < MIDI.keyToNote[lowestNote]
-                    || MIDI.keyToNote[transposedTune[k]] > MIDI.keyToNote[highestNote]) {
-                    validTune = false;
-                }
+        validTune = true;
+        const transposedTune = transpose(generatedScore);
+        for (let k = 0; k < generatedScore.length; k++) {
+            if (keyToNote[transposedTune[k]] < keyToNote[lowestNote]
+                || keyToNote[transposedTune[k]] > keyToNote[highestNote]) {
+                validTune = false;
             }
         }
-
-        if (showFirstNote) {
-            drawScore(generatedScore);
-        }
-
-        midiLoaded = true;
-        replayMusic.classList.remove('loading')
-    }, null, function (e) {
-        console.log(e)
-    });
-};
-
-const counterListener = function (data) {
-    noteBullets[numberNotes - 1].classList.remove('active');
-    noteBullets[currentNote].classList.add('active');
-    if (currentNote > 0) {
-        noteBullets[currentNote - 1].classList.remove('active');
     }
-    currentNote++;
-    if (currentNote >= numberNotes) {
-        currentNote = 0;
-        player.removeListener();
-        player.stop();
-        player.addListener(counterListener)
-    }
-};
 
-const addNoteElements = function () {
+    if (showFirstNote) {
+        drawScore(generatedScore);
+    }
+
+    midiLoaded = true;
+    replayMusicButton.classList.remove('loading')
+}
+
+
+function addNoteElements() {
+    /**
+     * Add the bullets to keep track of which note is played
+     */
     // Remove current elements
-    while (noteHolder.firstChild) noteHolder.removeChild(noteHolder.firstChild);
+    while (notesElement.firstChild) notesElement.removeChild(notesElement.firstChild);
     // Add the new ones.
     for (let k = 0; k < numberNotes; k++) {
         let li = document.createElement("li");
-        noteHolder.appendChild(li);
+        notesElement.appendChild(li);
         noteBullets.push(li);
     }
 };
 
-const drawScore = function (notes) {
+function drawScore(notes) {
+    /**
+     * Draw the staff
+     * @type {string}
+     */
     transcriptElement.innerHTML = "";
 
     if (notes.length) {
@@ -279,72 +302,52 @@ const drawScore = function (notes) {
     }
 }
 
-const generateRandomExcerpt = function () {
-    let notes = [];
-    let possibleNotes = [];
-
-    for (let [key, note] of Object.entries(MIDI.noteToKey)) {
-
-        if (key >= MIDI.keyToNote[lowestNote] && key <= MIDI.keyToNote[highestNote]) {
-            possibleNotes.push(note)
-        }
-    }
-
-    for (let k = 0; k < numberNotes; k++) {
-        let item = Math.floor(Math.random() * possibleNotes.length);
-        notes.push(possibleNotes[item]);
-    }
-
-    return notes;
-};
-
-const playExcerpt = async function () {
-    MIDI.setVolume(0, 127);
+async function playExcerpt(excerpt) {
     playing = true;
     for (let k = 0; k < generatedScore.length; k++) {
-        let note = MIDI.keyToNote[generatedScore[k]]
+        let note = generatedScore[k]
         noteBullets[k].classList.add('active');
-        MIDI.noteOn(0, note, 127, 0);
-        MIDI.noteOff(0, note, 0.75);
+        synth.triggerAttackRelease(note, 0.5)
         await sleep(1000);
         noteBullets[k].classList.remove('active');
     }
     playing = false;
 }
 
-window.onload = function () {
-    MIDI.loadPlugin({
-        soundfontUrl: "./soundfont/",
-        instrument: "acoustic_grand_piano", // or the instrument code 1 (aka the default)
-        onprogress: function (state, progress) {
-            console.log(state, progress);
-        },
-        onsuccess: async function () {
-            console.log("success")
 
-            player = MIDI.Player;
-
-            player.addListener(counterListener);
-            nextMusic.classList.remove('loading')
-
-            addNoteElements();
-
-            await loadMIDIFile()
-
-            nextMusic.addEventListener("click", async function (e) {
-                showSolution = false;
-                revealAnswerElement.classList.add('loading')
-                await loadMIDIFile()
-            });
-
-            replayMusic.addEventListener("click", async function (e) {
-                if (!playing) {
-                    await playExcerpt()
-                    revealAnswerElement.classList.remove('loading')
-                }
-            });
-        }
-    });
-}
-
-
+// window.onload = function () {
+//     MIDI.loadPlugin({
+//         soundfontUrl: "./soundfont/",
+//         instrument: "acoustic_grand_piano", // or the instrument code 1 (aka the default)
+//         onprogress: function (state, progress) {
+//             console.log(state, progress);
+//         },
+//         onsuccess: async function () {
+//             console.log("success")
+//
+//             player = MIDI.Player;
+//
+//             player.addListener(counterListener);
+//             nextMusicButton.classList.remove('loading')
+//
+//             addNoteElements();
+//
+//             await loadMIDIFile()
+//
+//             nextMusicButton.addEventListener("click", async function (e) {
+//                 showSolution = false;
+//                 solutionButton.classList.add('loading')
+//                 await loadMIDIFile()
+//             });
+//
+//             replayMusicButton.addEventListener("click", async function (e) {
+//                 if (!playing) {
+//                     await playExcerpt()
+//                     solutionButton.classList.remove('loading')
+//                 }
+//             });
+//         }
+//     });
+// }
+//
+//
