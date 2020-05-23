@@ -166,11 +166,13 @@ nextMusicButton.addEventListener("click", async function (e) {
     showSolution = false;
     solutionButton.classList.add('loading')
     await generateScore();
+    await playExcerpt();
+    solutionButton.classList.remove('loading')
 });
 
 replayMusicButton.addEventListener("click", async function (e) {
     if (!playing) {
-        await playExcerpt()
+        await playExcerpt();
         solutionButton.classList.remove('loading')
     }
 });
@@ -240,7 +242,8 @@ function addNoteElements() {
         notesElement.appendChild(li);
         noteBullets.push(li);
     }
-};
+}
+
 
 function drawScore(notes) {
     /**
@@ -255,13 +258,13 @@ function drawScore(notes) {
         // Create an SVG renderer and attach it to the DIV element named "boo".
         let renderer = new VF.Renderer(transcriptElement, VF.Renderer.Backends.SVG);
         // Size our SVG:
-        const width = Math.min(600, window.innerWidth - 40);
+        const width = Math.min(960, window.innerWidth - 40);
         renderer.resize(width, 200);
         // And get a drawing context:
         let context = renderer.getContext();
 
         // Create a stave at position 10, 40 of width 400 on the canvas.
-        let stave = new VF.Stave(10, 40, 700);
+        let stave = new VF.Stave(0, 0, width);
 
 
         if (!showSolution) {
@@ -320,6 +323,7 @@ function drawScore(notes) {
 
 async function playExcerpt(excerpt) {
     playing = true;
+    replayMusicButton.classList.add('loading')
     for (let k = 0; k < generatedScore.length; k++) {
         let note = generatedScore[k]
         noteBullets[k].classList.add('active');
@@ -328,4 +332,5 @@ async function playExcerpt(excerpt) {
         noteBullets[k].classList.remove('active');
     }
     playing = false;
+    replayMusicButton.classList.remove('loading')
 }
