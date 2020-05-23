@@ -151,6 +151,11 @@ transposeInput.addEventListener("change", function (e) {
 
 solutionButton.addEventListener("click", function (e) {
     showSolution = !showSolution;
+    if (showSolution) {
+        solutionButton.classList.add('active')
+    } else{
+        solutionButton.classList.remove('active')
+    }
 
     if (!showFirstNote && showSolution)
         transcriptElement.classList.remove("hidden");
