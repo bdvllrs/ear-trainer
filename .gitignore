@@ -3,5 +3,5 @@ soundfont
 fontawesome
 .idea
 midi/*
-!midi/.gitkeep
+!midi/readme.md
 scores.json
