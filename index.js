@@ -28,7 +28,6 @@ const synth = new Tone.Sampler(Soundfont, function () {
     fetch("scores.json")
         .then(async function (resp) {
             scores = await resp.json();
-            console.log("Tunes fetched.");
 
             nextMusicButton.classList.remove('loading')
             addNoteElements();
@@ -70,6 +69,7 @@ function makeKeyToNote() {
     }
     return {keyToNote, noteToKey};
 }
+
 
 // Load settings from local storage.
 if (localStorage.getItem("transpose")) {
@@ -203,14 +203,11 @@ function generateScore() {
     while (!validTune) {
         const tune = sample(scores).notes;
         const musicStart = Math.floor(Math.random() * (tune.length - numberNotes));
-        console.log(tune);
 
         generatedScore = tune.slice(musicStart, musicStart + numberNotes);
-        console.log(generatedScore);
         generatedScore = generatedScore.map(function (n) {
             return noteToKey[n];
         });
-        console.log(generatedScore);
 
         validTune = true;
         const transposedTune = transpose(generatedScore);
@@ -266,37 +263,55 @@ function drawScore(notes) {
         // Create a stave at position 10, 40 of width 400 on the canvas.
         let stave = new VF.Stave(10, 40, 700);
 
-        // Add a clef and time signature.
-        stave.addClef("treble");
-
-        // Connect it to the rendering context and draw!
-        stave.setContext(context).draw();
 
         if (!showSolution) {
             notes = notes.slice(0, 1);
         }
 
-        console.log(notes);
         notes = transpose(notes);
-        console.log(notes);
 
-        notes = notes.map(function (note) {
+        let staveElement = [];
+        let firstClef;
+        let lastClef;
+
+        notes.forEach(function (note) {
+            let clef = "treble";
+            if (keyToNote[note] <= keyToNote['C3']) {
+                clef = "bass";
+            }
+            if (!firstClef) {
+                firstClef = clef;
+                lastClef = clef;
+            }
+            if (clef !== lastClef) {
+                staveElement.push(new VF.ClefNote(clef));
+            }
             const n = note.slice(0, -1) + "/" + note.slice(-1);
-            let staveNote = new VF.StaveNote({clef: "treble", keys: [n], duration: "q"})
+            let staveNote = new VF.StaveNote({clef: clef, keys: [n], duration: "q"})
             if (note.slice(1, 2) === "#") {
                 staveNote = staveNote.addAccidental(0, new VF.Accidental("#"));
             } else if (note.slice(1, 2) === "b") {
                 staveNote = staveNote.addAccidental(0, new VF.Accidental("b"));
             }
-            return staveNote;
+            staveElement.push(staveNote);
+            lastClef = clef;
         });
+        if (!firstClef) {
+            firstClef = "treble";
+        }
+
+        // Add a clef
+        stave.addClef(firstClef);
+
+        // Connect it to the rendering context and draw!
+        stave.setContext(context).draw();
 
         // Create a voice in 4/4 and add the notes from above
         let voice = new VF.Voice({num_beats: notes.length, beat_value: 4});
-        voice.addTickables(notes);
+        voice.addTickables(staveElement);
 
         // Format and justify the notes to 400 pixels.
-        let formatter = new VF.Formatter().joinVoices([voice]).format([voice], 400);
+        let formatter = new VF.Formatter().joinVoices([voice]).format([voice], width);
 
         // Render voice
         voice.draw(context, stave);
@@ -314,41 +329,3 @@ async function playExcerpt(excerpt) {
     }
     playing = false;
 }
-
-
-// window.onload = function () {
-//     MIDI.loadPlugin({
-//         soundfontUrl: "./soundfont/",
-//         instrument: "acoustic_grand_piano", // or the instrument code 1 (aka the default)
-//         onprogress: function (state, progress) {
-//             console.log(state, progress);
-//         },
-//         onsuccess: async function () {
-//             console.log("success")
-//
-//             player = MIDI.Player;
-//
-//             player.addListener(counterListener);
-//             nextMusicButton.classList.remove('loading')
-//
-//             addNoteElements();
-//
-//             await loadMIDIFile()
-//
-//             nextMusicButton.addEventListener("click", async function (e) {
-//                 showSolution = false;
-//                 solutionButton.classList.add('loading')
-//                 await loadMIDIFile()
-//             });
-//
-//             replayMusicButton.addEventListener("click", async function (e) {
-//                 if (!playing) {
-//                     await playExcerpt()
-//                     solutionButton.classList.remove('loading')
-//                 }
-//             });
-//         }
-//     });
-// }
-//
-//
