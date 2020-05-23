@@ -258,7 +258,8 @@ function drawScore(notes) {
         // Create an SVG renderer and attach it to the DIV element named "boo".
         let renderer = new VF.Renderer(transcriptElement, VF.Renderer.Backends.SVG);
         // Size our SVG:
-        renderer.resize(800, 200);
+        const width = Math.min(600, window.innerWidth - 40);
+        renderer.resize(width, 200);
         // And get a drawing context:
         let context = renderer.getContext();
 
