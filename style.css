@@ -6,6 +6,7 @@ body, html {
 
     --green-color: green;
     --light-green-color: #27b427;
+    --red-color: #e72e2e;
     --blue-color: #43a6ee;
     --very-light-grey-color: #eeeeee;
     --light-grey-color: #cdcaca;
@@ -46,8 +47,16 @@ body, html {
     transition: .3s;
 }
 
+.actions button small {
+    font-size: 12px;
+}
+
 .actions button:hover, .actions button.active{
     background-color: var(--light-green-color);
+}
+
+.actions #record.active {
+    background-color: var(--blue-color);
 }
 
 .actions button::-moz-focus-inner {
@@ -82,6 +91,14 @@ body, html {
 
 .notes li.active {
     background-color: var(--blue-color);
+}
+
+.notes li.valid {
+    background-color: var(--light-green-color);
+}
+
+.notes li.wrong {
+    background-color: var(--red-color);
 }
 
 .transcript{
