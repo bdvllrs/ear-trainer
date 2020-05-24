@@ -194,11 +194,16 @@ function makeKeyToNote() {
         21: "A0", 22: "Bb0", 23: "B0", 108: "C8"
     };
     const notes = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+    const alternativePitchNotation = {"Db": "C#", "Eb": "D#", "Gb": "F#", "Ab": "G#", "Bb": "A#"};
     let curNote = 24;
     for (let k = 0; k <= 7; k++) {
         notes.forEach(function (note) {
-            keyToNote[note + k.toString()] = curNote;
-            noteToKey[curNote] = note + k.toString();
+            const pitch = note + k.toString();
+            keyToNote[pitch] = curNote;
+            noteToKey[curNote] = pitch;
+            if (alternativePitchNotation[note]) {
+                keyToNote[alternativePitchNotation[note] + k.toString()] = curNote;
+            }
             curNote++;
         });
     }
@@ -548,7 +553,7 @@ function validateRecording(noteSequence) {
 }
 
 function resetDrawValidRecordedNotes() {
-    noteBullets.forEach(function(bullet) {
+    noteBullets.forEach(function (bullet) {
         bullet.classList.remove("valid");
         bullet.classList.remove("wrong");
     });
@@ -557,8 +562,7 @@ function resetDrawValidRecordedNotes() {
 function drawValidRecordedNotes() {
     if (correctRecordedNotes >= 1) {
         noteBullets[correctRecordedNotes - 1].classList.add("valid");
-    }
-    else if (correctRecordedNotes < 0) {
+    } else if (correctRecordedNotes < 0) {
         noteBullets[-correctRecordedNotes - 1].classList.add("wrong");
     }
 }
