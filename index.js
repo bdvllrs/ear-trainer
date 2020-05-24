@@ -16,9 +16,8 @@ let lowestNote;
 let transposeInstrument;
 let noteBullets = [];
 let scores;
-let recordedNotes = [];
 let lastRecordedNote;
-let correctRecordedNotes = 0;
+let itemLastCorrectRecordedNote = -1;
 const {keyToNote, noteToKey} = makeKeyToNote();
 let synth;
 let generatedScore = [];
@@ -30,6 +29,7 @@ let nextButton,
     recordButton,
     notesElement,
     transcriptElement,
+    pitchPlayingElement,
     showFirstNoteInput,
     numberNoteInput,
     lowestNoteInput,
@@ -44,6 +44,7 @@ window.onload = function () {
     recordButton = document.getElementById("record");
     notesElement = document.getElementById("notes");
     transcriptElement = document.getElementById("transcript");
+    pitchPlayingElement = document.getElementById("pitch-playing")
     showFirstNoteInput = document.getElementById("show-first-notes");
     numberNoteInput = document.getElementById("number-notes");
     lowestNoteInput = document.getElementById("lowest-note");
@@ -380,12 +381,15 @@ function drawScore(notes) {
 }
 
 async function playExcerpt() {
+    resetDrawValidRecordedNotes();
     playing = true;
+    recordButton.classList.remove('active')
+    recordButton.classList.add('loading')
     playButton.classList.add('loading')
     for (let k = 0; k < generatedScore.length; k++) {
         let note = generatedScore[k]
         noteBullets[k].classList.add('active');
-        synth.triggerAttackRelease(note, 0.5)
+        synth.triggerAttackRelease(note, 0.5);
         await sleep(1000);
         noteBullets[k].classList.remove('active');
     }
@@ -453,11 +457,11 @@ let buf = new Float32Array(buflen);
 
 function noteFromPitch(frequency) {
     let noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-    return Math.round(noteNum) + 69;
+    return Math.round(noteNum) + 69 + 12;
 }
 
 function frequencyFromNoteNumber(note) {
-    return 440 * Math.pow(2, (note - 69) / 12);
+    return 440 * Math.pow(2, (note - 69 - 12) / 12);
 }
 
 let MIN_SAMPLES = 0;  // will be initialized when AudioContext is created.
@@ -518,13 +522,13 @@ function autoCorrelate(buf, sampleRate) {
     return -1;
 }
 
-function validateRecording(noteSequence) {
+function validateRecording(note) {
     // return Math.min(noteSequence.length, generatedScore.length);
-    const lastItem = noteSequence.length - 1;
-    if (noteSequence[lastItem] === generatedScoreTransposed[lastItem]) {
-        return lastItem + 1;
+    if (note === generatedScore[itemLastCorrectRecordedNote + 1]) {
+        itemLastCorrectRecordedNote++;
+        return true;
     }
-    return -(lastItem + 1);
+    return false;
     // let lastSequenceItem = -1;
     // let isValid = 0;  // -(index of incorrect note +1) if not valid, otherwise number of correct notes.
     // // For each note in the original sequence, we will
@@ -559,49 +563,40 @@ function resetDrawValidRecordedNotes() {
     });
 }
 
-function drawValidRecordedNotes() {
-    if (correctRecordedNotes >= 1) {
-        noteBullets[correctRecordedNotes - 1].classList.add("valid");
-    } else if (correctRecordedNotes < 0) {
-        noteBullets[-correctRecordedNotes - 1].classList.add("wrong");
-    }
-}
-
 function updatePitch(time) {
     analyser.getFloatTimeDomainData(buf);
     let ac = autoCorrelate(buf, audioContext.sampleRate);
 
     let noteString;
     if (ac !== -1) {
-        if (!recordedNotes.length) {
-            resetDrawValidRecordedNotes();
-        }
-
         let note = noteFromPitch(ac);
         noteString = noteToKey[note];
-        // FIXME: not working if notes are slurred.
-        if (noteString && !lastRecordedNote) {
-            recordedNotes.push(noteString);
-        }
-
-        correctRecordedNotes = validateRecording(recordedNotes);
-        console.log(recordedNotes);
-        console.log(correctRecordedNotes);
-        drawValidRecordedNotes();
-        // Replayed the score correctly
-        if (correctRecordedNotes === generatedScore.length) {
-            if (!showSolution) {
-                clickAnwserButtonCallback();
+        const transposedNoteString = transpose([noteString])[0];
+        if (noteString !== lastRecordedNote) {
+            if (transposedNoteString) {  // remove undefined notes
+                pitchPlayingElement.innerHTML = `<i class="fas fa-music"></i> &nbsp; ${noteString} &nbsp; <i class="fas fa-long-arrow-alt-right"></i> &nbsp; ${transposedNoteString}`;
             }
-            recordedNotes = [];
-            correctRecordedNotes = 0;
-            isRecording = false;
-            recordButton.classList.remove("active");
+
+            if (validateRecording(noteString)) {
+                noteBullets[itemLastCorrectRecordedNote].classList.remove("wrong");
+                noteBullets[itemLastCorrectRecordedNote].classList.add("valid");
+            } else {
+                noteBullets[itemLastCorrectRecordedNote + 1].classList.remove("valid");
+                noteBullets[itemLastCorrectRecordedNote + 1].classList.add("wrong");
+            }
+            // Replayed the score correctly
+            if (itemLastCorrectRecordedNote === generatedScore.length - 1) {
+                pitchPlayingElement.innerHTML = "";
+                if (!showSolution) {
+                    clickAnwserButtonCallback();
+                }
+                itemLastCorrectRecordedNote = -1;
+                isRecording = false;
+                recordButton.classList.remove("active");
+            }
         }
-        if (correctRecordedNotes < 0) {
-            recordedNotes = [];
-            correctRecordedNotes = 0;
-        }
+    } else {
+        pitchPlayingElement.innerHTML = "";
     }
     lastRecordedNote = noteString;
 
