@@ -3,6 +3,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
 const MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000));
 let mediaStreamSource;
+let mediaStream;
 let analyser;
 let showSolution = false;
 let numberNotes;
@@ -27,6 +28,7 @@ let nextButton,
     playButton,
     answerButton,
     recordButton,
+    stopRecordButton,
     notesElement,
     transcriptElement,
     pitchPlayingElement,
@@ -42,6 +44,7 @@ window.onload = function () {
     playButton = document.getElementById('play');
     answerButton = document.getElementById("answer");
     recordButton = document.getElementById("record");
+    stopRecordButton = document.getElementById("stop-record");
     notesElement = document.getElementById("notes");
     transcriptElement = document.getElementById("transcript");
     pitchPlayingElement = document.getElementById("pitch-playing")
@@ -95,8 +98,26 @@ window.onload = function () {
     }
 
     recordButton.addEventListener("click", function (e) {
-        if (played) {
-            toggleLiveInput();
+        if (played && !isRecording) {
+            if (mediaStream) {
+                recordButton.classList.add("active");
+                stopRecordButton.classList.remove("hidden");
+                isRecording = true;
+                updatePitch();
+            } else toggleLiveInput();
+        }
+        else if (isRecording) {
+            isRecording = false;
+            recordButton.classList.remove("active");
+        }
+    });
+
+    stopRecordButton.addEventListener("click", async function (e) {
+        if (mediaStream) {
+            isRecording = false;
+            await stopTracks();
+            recordButton.classList.remove("active");
+            stopRecordButton.classList.add("hidden");
         }
     });
 
@@ -381,6 +402,8 @@ function drawScore(notes) {
 }
 
 async function playExcerpt() {
+    itemLastCorrectRecordedNote = -1;
+    pitchPlayingElement.innerHTML = "";
     resetDrawValidRecordedNotes();
     playing = true;
     recordButton.classList.remove('active')
@@ -408,21 +431,20 @@ async function playExcerpt() {
 
 function getUserMedia(constraints, callback) {
     try {
-        navigator.getUserMedia =
-            navigator.getUserMedia ||
-            navigator.webkitGetUserMedia ||
-            navigator.mozGetUserMedia
-        navigator.getUserMedia(constraints, callback, function (e) {
-            console.log(e);
-        });
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(callback)
+            .catch(e => console.log(e));
     } catch (e) {
         console.log('getUserMedia threw exception :' + e);
     }
 }
 
-function gotStream(stream) {
+async function gotStream(stream) {
     recordAfterPlaying = true;
     recordButton.classList.add("active");
+    stopRecordButton.classList.remove("hidden");
+    isRecording = true;
+    mediaStream = stream;
     // Create an AudioNode from the stream.
     mediaStreamSource = audioContext.createMediaStreamSource(stream);
 
@@ -431,7 +453,6 @@ function gotStream(stream) {
     analyser.fftSize = 2048;
     mediaStreamSource.connect(analyser);
 
-    isRecording = true;
     updatePitch();
 }
 
@@ -458,10 +479,6 @@ let buf = new Float32Array(buflen);
 function noteFromPitch(frequency) {
     let noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
     return Math.round(noteNum) + 69 + 12;
-}
-
-function frequencyFromNoteNumber(note) {
-    return 440 * Math.pow(2, (note - 69 - 12) / 12);
 }
 
 let MIN_SAMPLES = 0;  // will be initialized when AudioContext is created.
@@ -529,31 +546,6 @@ function validateRecording(note) {
         return true;
     }
     return false;
-    // let lastSequenceItem = -1;
-    // let isValid = 0;  // -(index of incorrect note +1) if not valid, otherwise number of correct notes.
-    // // For each note in the original sequence, we will
-    // // check that the note appears in the generated sequence
-    // transposedScore.forEach(function (note) {
-    //     if (isValid >= 0) {
-    //         for (let k = lastSequenceItem + 1; k < noteSequence.length; k++) {
-    //             // If first loop iteration and note is incorrect, the sequence is wrong.
-    //             if (k === lastSequenceItem + 1 && noteSequence[k] !== note) {
-    //                 isValid = -isValid - 1
-    //                 break;
-    //             }
-    //             // If note changes, we go to the next note in the score
-    //             if (noteSequence[k] !== note) {
-    //                 lastSequenceItem = k;
-    //                 break;
-    //             }
-    //             // We have a correct note, increase the number of valid note
-    //             if (k === lastSequenceItem + 1) {
-    //                 isValid++;
-    //             }
-    //         }
-    //     }
-    // });
-    // return isValid;
 }
 
 function resetDrawValidRecordedNotes() {
@@ -561,6 +553,15 @@ function resetDrawValidRecordedNotes() {
         bullet.classList.remove("valid");
         bullet.classList.remove("wrong");
     });
+}
+
+async function stopTracks() {
+    pitchPlayingElement.innerHTML = "";
+    recordAfterPlaying = true;
+    await mediaStream.getTracks().forEach(function (track) {
+        track.stop();
+    });
+    mediaStream = null;
 }
 
 function updatePitch(time) {

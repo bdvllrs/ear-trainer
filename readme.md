@@ -36,3 +36,4 @@ You can change the soundfont by updating the `soundfont.js` file.
 - [Tone.js](https://tonejs.github.io/) for sound generation
 - [Vexflow](https://www.vexflow.com/) for scores
 - [MIDI.js](https://github.com/mudcube/MIDI.js) for the soundfont
+- [PitchDetect](https://github.com/cwilso/PitchDetect) to detect played pitch

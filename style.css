@@ -7,6 +7,8 @@ body, html {
     --green-color: green;
     --light-green-color: #27b427;
     --red-color: #e72e2e;
+    --dark-red-color: #ba1818;
+    --light-dark-red-color: #d11b1b;
     --blue-color: #43a6ee;
     --very-light-grey-color: #eeeeee;
     --light-grey-color: #cdcaca;
@@ -23,6 +25,45 @@ body, html {
     height: 100px;
     text-align: center;
     font-size: 50px;
+}
+
+.stop-record {
+    display: block;
+    cursor: pointer;
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    height: 50px;
+    border-radius: 25px;
+    background-color: var(--dark-red-color);
+    color: #FFF;
+    font-size: 20px;
+    line-height: 50px;
+    padding: 0 10px;
+
+    box-shadow: none;
+    border: 0;
+    transition: .3s;
+}
+
+.stop-record.hidden {
+    display: none;
+ }
+
+.stop-record:hover {
+    background-color: var(--light-dark-red-color);
+}
+
+.stop-record i {
+    height: 100%;
+    vertical-align: middle;
+    margin-top: -8px;
+}
+
+.stop-record span {
+    display: inline-block;
+    overflow: hidden;
+    margin-left: 10px;
 }
 
 .actions {
