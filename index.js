@@ -97,6 +97,11 @@ window.onload = function () {
         highestNoteInput.value = highestNote;
     }
 
+    if (localStorage.getItem("number-notes")) {
+        numberNotes = localStorage.getItem("number-notes");
+        numberNoteInput.value = numberNotes;
+    }
+
     recordButton.addEventListener("click", function (e) {
         if (played && !isRecording) {
             if (mediaStream) {
@@ -123,6 +128,7 @@ window.onload = function () {
 
     numberNoteInput.addEventListener("change", async function (e) {
         numberNotes = parseInt(e.target.value);
+        localStorage.setItem("number-notes", numberNotes);
 
         resetNoteBullets();
 
@@ -241,17 +247,36 @@ function resetNoteBullets() {
     }
 }
 
-function sample(list) {
-    return list[Math.floor(Math.random() * list.length)];
+function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min
 }
 
+function sample(list) {
+    return list[randInt(0, list.length)];
+}
+
+/**
+ * Transpose the notes by shifting up the notes by the amount of shift value
+ * @param notes
+ * @param shift
+ * @returns {*}
+ */
+function transposeByShift(notes, shift) {
+    return notes.map(function (note) {
+        return noteToKey[keyToNote[note] + shift];
+    });
+}
+
+/**
+ * Transpose the notes to the transposeInstrument value
+ * @param notes
+ * @returns
+ */
 function transpose(notes) {
     const concertPitch = keyToNote['C4'];
     const transposePitch = keyToNote[transposeInstrument];
     const difference = concertPitch - transposePitch;
-    return notes.map(function (note) {
-        return noteToKey[keyToNote[note] + difference];
-    })
+    return transposeByShift(notes, difference);
 }
 
 function clickAnwserButtonCallback() {
@@ -280,6 +305,8 @@ function generateScore() {
     playButton.classList.add('loading')
     recordButton.classList.add('loading')
     let validTune = false;
+    const range = keyToNote[highestNote] - keyToNote[lowestNote];
+    let minVal, maxVal;
     while (!validTune) {
         const tune = sample(scores).notes;
         const musicStart = Math.floor(Math.random() * (tune.length - numberNotes));
@@ -289,15 +316,25 @@ function generateScore() {
             return noteToKey[n];
         });
 
-        validTune = true;
-        const transposedTune = transpose(generatedScore);
-        for (let k = 0; k < generatedScore.length; k++) {
-            if (keyToNote[transposedTune[k]] < keyToNote[lowestNote]
-                || keyToNote[transposedTune[k]] > keyToNote[highestNote]) {
-                validTune = false;
-            }
+        const scoreValues = generatedScore.map(function(note) {
+            return keyToNote[note];
+        });
+        minVal = Math.min.apply(Math, scoreValues);
+        maxVal = Math.max.apply(Math, scoreValues);
+
+        // Tune is valid if the difference between highest and lowest is smaller than instrument range.
+        if (maxVal - minVal <= range) {
+            validTune = true;
         }
     }
+    // Then transpose score to have a real random first note.
+    // We transpose from the lowest note in the score.
+    // Random note can be from lowest instrument note, to highest minus range of the score
+    const newLowestNote = randInt(keyToNote[lowestNote], keyToNote[highestNote] - (maxVal - minVal));
+    // transpose song for new lowest note
+    const shift = newLowestNote - minVal;
+    generatedScore = transposeByShift(generatedScore, shift);
+
     generatedScoreTransposed = transpose(generatedScore);
 
     if (showFirstNote) {
