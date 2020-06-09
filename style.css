@@ -183,6 +183,11 @@ body, html {
     height: 30px;
 }
 
+.settings .option input[type="checkbox"]{
+    height: 15px;
+    width: 15px;
+}
+
 .description {
     margin: 50px auto;
     padding: 20px;
