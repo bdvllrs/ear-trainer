@@ -98,7 +98,7 @@ window.onload = function () {
     }
 
     if (localStorage.getItem("number-notes")) {
-        numberNotes = localStorage.getItem("number-notes");
+        numberNotes = parseInt(localStorage.getItem("number-notes"));
         numberNoteInput.value = numberNotes;
     }
 
@@ -315,6 +315,7 @@ function generateScore() {
         generatedScore = generatedScore.map(function (n) {
             return noteToKey[n];
         });
+
 
         const scoreValues = generatedScore.map(function(note) {
             return keyToNote[note];
