@@ -2,6 +2,7 @@ const localStorage = window.localStorage;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
 const MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000));
+let pitchAnalyzer;
 let mediaStreamSource;
 let mediaStream;
 let analyser;
@@ -19,6 +20,7 @@ let noteBullets = [];
 let scores;
 let lastRecordedNote;
 let itemLastCorrectRecordedNote = -1;
+let playBackSpeed = 500;
 const {keyToNote, noteToKey} = makeKeyToNote();
 let synth;
 let generatedScore = [];
@@ -36,7 +38,8 @@ let nextButton,
     numberNoteInput,
     lowestNoteInput,
     highestNoteInput,
-    transposeInput;
+    transposeInput,
+    playBackSpeedRange;
 
 window.onload = function () {
     // DOM elements
@@ -53,6 +56,7 @@ window.onload = function () {
     lowestNoteInput = document.getElementById("lowest-note");
     highestNoteInput = document.getElementById("highest-note");
     transposeInput = document.getElementById("transpose");
+    playBackSpeedRange = document.getElementById("play-back-speed");
 
     showFirstNote = showFirstNoteInput.checked;
     numberNotes = parseInt(numberNoteInput.value);
@@ -102,6 +106,11 @@ window.onload = function () {
         numberNoteInput.value = numberNotes;
     }
 
+    if (localStorage.getItem("play-back-speed")) {
+        playBackSpeed = localStorage.getItem("play-back-speed");
+        playBackSpeedRange.value = playBackSpeed;
+    }
+
     recordButton.addEventListener("click", function (e) {
         if (played && !isRecording) {
             if (mediaStream) {
@@ -110,8 +119,7 @@ window.onload = function () {
                 isRecording = true;
                 updatePitch();
             } else toggleLiveInput();
-        }
-        else if (isRecording) {
+        } else if (isRecording) {
             isRecording = false;
             recordButton.classList.remove("active");
         }
@@ -206,6 +214,11 @@ window.onload = function () {
             await playExcerpt();
             answerButton.classList.remove('loading')
         }
+    });
+
+    playBackSpeedRange.addEventListener("change", function(e) {
+        playBackSpeed = e.target.value;
+        localStorage.setItem("play-back-speed", playBackSpeed);
     });
 
 }
@@ -317,7 +330,7 @@ function generateScore() {
         });
 
 
-        const scoreValues = generatedScore.map(function(note) {
+        const scoreValues = generatedScore.map(function (note) {
             return keyToNote[note];
         });
         minVal = Math.min.apply(Math, scoreValues);
@@ -451,7 +464,7 @@ async function playExcerpt() {
         let note = generatedScore[k]
         noteBullets[k].classList.add('active');
         synth.triggerAttackRelease(note, 0.5);
-        await sleep(1000);
+        await sleep(playBackSpeed);
         noteBullets[k].classList.remove('active');
     }
     playing = false;
@@ -488,8 +501,10 @@ async function gotStream(stream) {
 
     // Connect it to the destination.
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
+    analyser.fftSize = 4096;
     mediaStreamSource.connect(analyser);
+
+    pitchAnalyzer = new PitchAnalyzer(audioContext.sampleRate);
 
     updatePitch();
 }
@@ -510,71 +525,13 @@ function toggleLiveInput() {
         }, gotStream);
 }
 
-let buflen = 1024;
+let buflen = 4096;
 let buf = new Float32Array(buflen);
 
 
 function noteFromPitch(frequency) {
     let noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
     return Math.round(noteNum) + 69 + 12;
-}
-
-let MIN_SAMPLES = 0;  // will be initialized when AudioContext is created.
-let GOOD_ENOUGH_CORRELATION = 0.9; // this is the "bar" for how close a correlation needs to be
-let rafID = null;
-
-function autoCorrelate(buf, sampleRate) {
-    let SIZE = buf.length;
-    let MAX_SAMPLES = Math.floor(SIZE / 2);
-    let best_offset = -1;
-    let best_correlation = 0;
-    let rms = 0;
-    let foundGoodCorrelation = false;
-    let correlations = new Array(MAX_SAMPLES);
-
-    for (let i = 0; i < SIZE; i++) {
-        let val = buf[i];
-        rms += val * val;
-    }
-    rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.01) // not enough signal
-        return -1;
-
-    let lastCorrelation = 1;
-    for (let offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
-        let correlation = 0;
-
-        for (let i = 0; i < MAX_SAMPLES; i++) {
-            correlation += Math.abs((buf[i]) - (buf[i + offset]));
-        }
-        correlation = 1 - (correlation / MAX_SAMPLES);
-        correlations[offset] = correlation; // store it, for the tweaking we need to do below.
-        if ((correlation > GOOD_ENOUGH_CORRELATION) && (correlation > lastCorrelation)) {
-            foundGoodCorrelation = true;
-            if (correlation > best_correlation) {
-                best_correlation = correlation;
-                best_offset = offset;
-            }
-        } else if (foundGoodCorrelation) {
-            // short-circuit - we found a good correlation, then a bad one, so we'd just be seeing copies from here.
-            // Now we need to tweak the offset - by interpolating between the values to the left and right of the
-            // best offset, and shifting it a bit.  This is complex, and HACKY in this code (happy to take PRs!) -
-            // we need to do a curve fit on correlations[] around best_offset in order to better determine precise
-            // (anti-aliased) offset.
-
-            // we know best_offset >=1,
-            // since foundGoodCorrelation cannot go to true until the second pass (offset=1), and
-            // we can't drop into this clause until the following pass (else if).
-            let shift = (correlations[best_offset + 1] - correlations[best_offset - 1]) / correlations[best_offset];
-            return sampleRate / (best_offset + (8 * shift));
-        }
-        lastCorrelation = correlation;
-    }
-    if (best_correlation > 0.01) {
-        // console.log("f = " + sampleRate/best_offset + "Hz (rms: " + rms + " confidence: " + best_correlation + ")")
-        return sampleRate / best_offset;
-    }
-    return -1;
 }
 
 function validateRecording(note) {
@@ -604,11 +561,14 @@ async function stopTracks() {
 
 function updatePitch(time) {
     analyser.getFloatTimeDomainData(buf);
-    let ac = autoCorrelate(buf, audioContext.sampleRate);
+    pitchAnalyzer.input(buf);
+    pitchAnalyzer.process();
+
+    const tone = pitchAnalyzer.findTone();
 
     let noteString;
-    if (ac !== -1) {
-        let note = noteFromPitch(ac);
+    if (tone !== null) {
+        let note = noteFromPitch(tone.freq);
         noteString = noteToKey[note];
         const transposedNoteString = transpose([noteString])[0];
         if (noteString !== lastRecordedNote) {

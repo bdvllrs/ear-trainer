@@ -35,6 +35,10 @@
         <label for="number-notes">Number of notes: <input type="number" id="number-notes" value="3" min="1" max="10"/></label>
     </div>
     <div class="option">
+        <label for="play-back-speed">Note duration (ms) <input type="number" min="100" max="5000" value="500" id="play-back-speed"></label>
+
+    </div>
+    <div class="option">
         <label for="show-first-notes">Show first note: <input type="checkbox" id="show-first-notes" checked/></label>
     </div>
     <div class="option">
@@ -89,6 +93,10 @@
 <script src="https://unpkg.com/vexflow@3.0.9/releases/vexflow-min.js"></script>
 <script src="https://unpkg.com/tone@13.8.25/build/Tone.js"></script>
 
+<script src="fft.js/real.js"></script>
+<script src="fft.js/complex.js"></script>
+
+<script src="pitch.js"></script>
 
 <script src="soundfont.js"></script>
 <script src="index.js"></script>
