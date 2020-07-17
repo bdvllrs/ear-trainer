@@ -1,7 +1,7 @@
 const localStorage = window.localStorage;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
-const MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000));
+const VF = Vex.Flow;
 let pitchAnalyzer;
 let mediaStreamSource;
 let mediaStream;
@@ -202,7 +202,7 @@ window.onload = function () {
         }
     });
 
-    answerButton.addEventListener("click", clickAnwserButtonCallback);
+    answerButton.addEventListener("click", clickAnswerButtonCallback);
 
     nextButton.addEventListener("click", async function (e) {
         showSolution = false;
@@ -297,7 +297,7 @@ function transpose(notes) {
     return transposeByShift(notes, difference);
 }
 
-function clickAnwserButtonCallback() {
+function clickAnswerButtonCallback() {
     if (played && !playing) {
         showSolution = !showSolution;
         if (showSolution) {
@@ -394,8 +394,6 @@ function drawScore(notes) {
     transcriptElement.innerHTML = "";
 
     if (notes.length) {
-        VF = Vex.Flow;
-
         // Create an SVG renderer and attach it to the DIV element named "boo".
         let renderer = new VF.Renderer(transcriptElement, VF.Renderer.Backends.SVG);
         // Size our SVG:
@@ -407,7 +405,6 @@ function drawScore(notes) {
         // Create a stave at position 10, 40 of width 400 on the canvas.
         let stave = new VF.Stave(0, 0, width);
 
-
         if (!showSolution) {
             notes = notes.slice(0, 1);
         }
@@ -417,6 +414,8 @@ function drawScore(notes) {
         let staveElement = [];
         let firstClef;
         let lastClef;
+
+        let accidentals = {};
 
         notes.forEach(function (note) {
             let clef = "treble";
@@ -431,11 +430,17 @@ function drawScore(notes) {
                 staveElement.push(new VF.ClefNote(clef));
             }
             const n = note.slice(0, -1) + "/" + note.slice(-1);
+            const rootNote = note.slice(0, 1);
             let staveNote = new VF.StaveNote({clef: clef, keys: [n], duration: "q"})
-            if (note.slice(1, 2) === "#") {
+            if (note.slice(1, 2) === "#" && accidentals[rootNote] !== "#") {
+                accidentals[rootNote] = "#";
                 staveNote = staveNote.addAccidental(0, new VF.Accidental("#"));
-            } else if (note.slice(1, 2) === "b") {
+            } else if (note.slice(1, 2) === "b" && accidentals[rootNote] !== "b") {
+                accidentals[rootNote] = "b";
                 staveNote = staveNote.addAccidental(0, new VF.Accidental("b"));
+            } else if (accidentals[rootNote]) {
+                delete accidentals[rootNote];
+                staveNote = staveNote.addAccidental(0, new VF.Accidental("n"));
             }
             staveElement.push(staveNote);
             lastClef = clef;
@@ -603,7 +608,7 @@ async function updatePitch(time) {
             if (itemLastCorrectRecordedNote === generatedScore.length - 1) {
                 pitchPlayingElement.innerHTML = "";
                 if (!showSolution) {
-                    clickAnwserButtonCallback();
+                    clickAnswerButtonCallback();
                 }
                 itemLastCorrectRecordedNote = -1;
                 isRecording = false;
