@@ -398,7 +398,7 @@ function drawScore(notes) {
         let renderer = new VF.Renderer(transcriptElement, VF.Renderer.Backends.SVG);
         // Size our SVG:
         const width = Math.min(960, window.innerWidth - 40);
-        renderer.resize(width, 200);
+        renderer.resize(width, 300);
         // And get a drawing context:
         let context = renderer.getContext();
 
@@ -459,11 +459,9 @@ function drawScore(notes) {
         let voice = new VF.Voice({num_beats: notes.length, beat_value: 4});
         voice.addTickables(staveElement);
 
-        // Format and justify the notes to 400 pixels.
-        let formatter = new VF.Formatter().joinVoices([voice]).format([voice], width);
-
-        // Render voice
-        voice.draw(context, stave);
+        const beams = VF.Beam.generateBeams(staveElement);
+        Vex.Flow.Formatter.FormatAndDraw(context, stave, staveElement);
+        beams.forEach(function(b) {b.setContext(context).draw()});
     }
 }
 
