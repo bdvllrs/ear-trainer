@@ -33,7 +33,8 @@ The sound is generated using a soundfont from MIDI.js.
 You can change the soundfont by updating the `soundfont.js` file.
 
 ## Credits
-- [Tone.js](https://tonejs.github.io/) for sound generation
-- [Vexflow](https://www.vexflow.com/) for scores
-- [MIDI.js](https://github.com/mudcube/MIDI.js) for the soundfont
-- [PitchDetect](https://github.com/cwilso/PitchDetect) to detect played pitch
+- [Tone.js](https://tonejs.github.io/) for sound generation.
+- [Vexflow](https://www.vexflow.com/) for scores.
+- [MIDI.js](https://github.com/mudcube/MIDI.js) for the soundfont.
+- [PitchDetech](https://github.com/cwilso/PitchDetect) live audio recording code heavily inspired by this repository.
+- [Pitchfinder](https://github.com/peterkhayes/pitchfinder) to detect played pitch. Using the Yin et al. algorithm.

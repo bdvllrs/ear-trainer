@@ -5,7 +5,6 @@ const MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000));
 let pitchAnalyzer;
 let mediaStreamSource;
 let mediaStream;
-const Pitchfinder = require("pitchfinder");
 let analyser;
 let showSolution = false;
 let numberNotes;
@@ -125,6 +124,7 @@ window.onload = function () {
             await audioContext.suspend()
             isRecording = false;
             recordButton.classList.remove("active");
+            resetDrawValidRecordedNotes();
             pitchPlayingElement.innerHTML = "";
         }
     });
@@ -549,7 +549,7 @@ let buf = new Float32Array(buflen);
 
 function noteFromPitch(frequency) {
     let noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-    return Math.round(noteNum) + 69;
+    return Math.round(noteNum) + 69 + 12;
 }
 
 function validateRecording(note) {
@@ -574,6 +574,7 @@ async function stopTracks() {
     await mediaStream.getTracks().forEach(function (track) {
         track.stop();
     });
+    resetDrawValidRecordedNotes();
     mediaStream = null;
 }
 

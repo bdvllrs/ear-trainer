@@ -787,3 +787,5 @@ exports.default = {
 };
 
 },{"./detectors/acf2plus":1,"./detectors/amdf":2,"./detectors/dynamic_wavelet":3,"./detectors/macleod":4,"./detectors/yin":5,"./tools/frequencies":6}]},{},[]);
+
+var Pitchfinder = require('pitchfinder');

@@ -5,3 +5,4 @@ fontawesome
 midi/*
 !midi/readme.md
 scores.json
+pitchfinder
