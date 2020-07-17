@@ -5,6 +5,7 @@ const MAX_SIZE = Math.max(4, Math.floor(audioContext.sampleRate / 5000));
 let pitchAnalyzer;
 let mediaStreamSource;
 let mediaStream;
+const Pitchfinder = require("pitchfinder");
 let analyser;
 let showSolution = false;
 let numberNotes;
@@ -111,17 +112,20 @@ window.onload = function () {
         playBackSpeedRange.value = playBackSpeed;
     }
 
-    recordButton.addEventListener("click", function (e) {
+    recordButton.addEventListener("click", async function (e) {
         if (played && !isRecording) {
             if (mediaStream) {
                 recordButton.classList.add("active");
                 stopRecordButton.classList.remove("hidden");
+                await audioContext.resume()
                 isRecording = true;
-                updatePitch();
+                await updatePitch();
             } else toggleLiveInput();
         } else if (isRecording) {
+            await audioContext.suspend()
             isRecording = false;
             recordButton.classList.remove("active");
+            pitchPlayingElement.innerHTML = "";
         }
     });
 
@@ -129,6 +133,7 @@ window.onload = function () {
         if (mediaStream) {
             isRecording = false;
             await stopTracks();
+            recordAfterPlaying = false;
             recordButton.classList.remove("active");
             stopRecordButton.classList.add("hidden");
         }
@@ -370,6 +375,11 @@ function addNoteElements() {
     // Add the new ones.
     for (let k = 0; k < numberNotes; k++) {
         let li = document.createElement("li");
+        li.addEventListener("click", async function() {
+            if (!playing) {
+                await playExcerpt(k);
+            }
+        });
         notesElement.appendChild(li);
         noteBullets.push(li);
     }
@@ -452,7 +462,8 @@ function drawScore(notes) {
     }
 }
 
-async function playExcerpt() {
+async function playExcerpt(startNote=0) {
+    if (startNote >= generatedScore.length) startNote = 0;
     itemLastCorrectRecordedNote = -1;
     pitchPlayingElement.innerHTML = "";
     resetDrawValidRecordedNotes();
@@ -460,10 +471,10 @@ async function playExcerpt() {
     recordButton.classList.remove('active')
     recordButton.classList.add('loading')
     playButton.classList.add('loading')
-    for (let k = 0; k < generatedScore.length; k++) {
+    for (let k = startNote; k < generatedScore.length; k++) {
         let note = generatedScore[k]
         noteBullets[k].classList.add('active');
-        synth.triggerAttackRelease(note, 0.5);
+        synth.triggerAttackRelease(note, 0.8 * playBackSpeed / 1000);
         await sleep(playBackSpeed);
         noteBullets[k].classList.remove('active');
     }
@@ -472,10 +483,10 @@ async function playExcerpt() {
     playButton.classList.remove('loading')
     recordButton.classList.remove('loading')
     if (recordAfterPlaying) {
-        console.log("record...")
         recordButton.classList.add('active')
+        await audioContext.resume();
         isRecording = true;
-        updatePitch();
+        await updatePitch();
     }
 }
 
@@ -498,15 +509,22 @@ async function gotStream(stream) {
     mediaStream = stream;
     // Create an AudioNode from the stream.
     mediaStreamSource = audioContext.createMediaStreamSource(stream);
+    // recordingBuffer = audioContext.createBuffer(2, 4096, audioContext.sampleRate);
+    // mediaStreamSource.connect(recordingBuffer)
 
     // Connect it to the destination.
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 4096;
     mediaStreamSource.connect(analyser);
+    //
+    // pitchAnalyzer = new PitchAnalyzer(audioContext.sampleRate);
+    pitchAnalyzer = Pitchfinder.YIN({
+        sampleRate: audioContext.sampleRate,
+        // threshold: 0.5,
+        probabilityThreshold: 0.8
+    })
 
-    pitchAnalyzer = new PitchAnalyzer(audioContext.sampleRate);
-
-    updatePitch();
+    await updatePitch();
 }
 
 
@@ -531,7 +549,7 @@ let buf = new Float32Array(buflen);
 
 function noteFromPitch(frequency) {
     let noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-    return Math.round(noteNum) + 69 + 12;
+    return Math.round(noteNum) + 69;
 }
 
 function validateRecording(note) {
@@ -559,16 +577,13 @@ async function stopTracks() {
     mediaStream = null;
 }
 
-function updatePitch(time) {
+async function updatePitch(time) {
     analyser.getFloatTimeDomainData(buf);
-    pitchAnalyzer.input(buf);
-    pitchAnalyzer.process();
-
-    const tone = pitchAnalyzer.findTone();
+    const pitch = pitchAnalyzer(buf)
 
     let noteString;
-    if (tone !== null) {
-        let note = noteFromPitch(tone.freq);
+    if (pitch !== null) {
+        let note = noteFromPitch(pitch);
         noteString = noteToKey[note];
         const transposedNoteString = transpose([noteString])[0];
         if (noteString !== lastRecordedNote) {
@@ -591,6 +606,7 @@ function updatePitch(time) {
                 }
                 itemLastCorrectRecordedNote = -1;
                 isRecording = false;
+                await audioContext.suspend();
                 recordButton.classList.remove("active");
             }
         }

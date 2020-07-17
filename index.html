@@ -17,7 +17,7 @@
 <div class="actions">
     <button id="next" class="loading">Next <br> <i class="fas fa-step-forward"></i></button>
     <button id="play" class="loading">Play <br> <i class="fas fa-play"></i></button>
-    <button id="record" class="loading">Record <br><i class="fas fa-microphone"></i><br><small>(experimental)</small> </button>
+    <button id="record" class="loading">Record <br><i class="fas fa-microphone"></i></button>
     <button id="answer" class="loading">Answer <br> <i class="far fa-eye"></i></button>
 </div>
 
@@ -35,7 +35,7 @@
         <label for="number-notes">Number of notes: <input type="number" id="number-notes" value="3" min="1" max="10"/></label>
     </div>
     <div class="option">
-        <label for="play-back-speed">Note duration (ms) <input type="number" min="100" max="5000" value="500" id="play-back-speed"></label>
+        <label for="play-back-speed">Note duration (ms) <input type="number" min="100" max="5000" value="700" id="play-back-speed"></label>
 
     </div>
     <div class="option">
@@ -87,6 +87,7 @@
         <li>vexflow to generate music score.</li>
         <li>fontawesome for the icons.</li>
         <li>MIDI.js for the piano soundfont.</li>
+        <li>peterkhayes/pitchfinder for the pitch detection.</li>
     </ul>
 </div>
 
@@ -96,7 +97,7 @@
 <script src="fft.js/real.js"></script>
 <script src="fft.js/complex.js"></script>
 
-<script src="pitch.js"></script>
+<script src="pitchfinder.js"></script>
 
 <script src="soundfont.js"></script>
 <script src="index.js"></script>
