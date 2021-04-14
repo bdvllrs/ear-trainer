@@ -437,11 +437,7 @@ function generateScore() {
             Object.keys(selectedIntervals).filter(interval => selectedIntervals[interval]),
             numberNotes
         )
-
-        console.log(generatedScoreTransposed)
-
         generatedScore = transpose(generatedScoreTransposed, true);
-        console.log(generatedScore)
     } else {
         let validTune = false;
         const range = keyToNote[highestNote] - keyToNote[lowestNote];
