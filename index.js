@@ -394,13 +394,16 @@ function transposeByShift(notes, shift) {
 /**
  * Transpose the notes to the transposeInstrument value
  * @param notes
+ * @param inverted
  * @returns
  */
-function transpose(notes) {
+function transpose(notes, inverted=false) {
     const concertPitch = keyToNote['C4'];
     const transposePitch = keyToNote[transposeInstrument];
-    const difference = concertPitch - transposePitch;
-    return transposeByShift(notes, difference);
+    if(inverted) {
+        return transposeByShift(notes, transposePitch - concertPitch);
+    }
+    return transposeByShift(notes, concertPitch - transposePitch);
 }
 
 function clickAnswerButtonCallback() {
@@ -429,11 +432,16 @@ function generateScore() {
     playButton.classList.add('loading')
     recordButton.classList.add('loading')
     if(useRandomScores) {
-        generatedScore = randomNoteSequence(
+        generatedScoreTransposed = randomNoteSequence(
             Object.keys(selectedNotes).filter(note => selectedNotes[note]),
             Object.keys(selectedIntervals).filter(interval => selectedIntervals[interval]),
             numberNotes
         )
+
+        console.log(generatedScoreTransposed)
+
+        generatedScore = transpose(generatedScoreTransposed, true);
+        console.log(generatedScore)
     } else {
         let validTune = false;
         const range = keyToNote[highestNote] - keyToNote[lowestNote];
@@ -466,9 +474,9 @@ function generateScore() {
         // transpose song for new lowest note
         const shift = newLowestNote - minVal;
         generatedScore = transposeByShift(generatedScore, shift);
-    }
 
-    generatedScoreTransposed = transpose(generatedScore);
+        generatedScoreTransposed = transpose(generatedScore);
+    }
 
     if (showFirstNote) {
         drawScore(generatedScore);
