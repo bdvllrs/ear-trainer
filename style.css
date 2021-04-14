@@ -175,7 +175,7 @@ body, html {
 }
 
 
-.settings {
+.settings, .description, .possible-notes{
     margin: 50px auto;
     padding: 20px;
     background-color: var(--very-light-grey-color);
@@ -201,15 +201,32 @@ body, html {
     width: 15px;
 }
 
-.description {
-    margin: 50px auto;
-    padding: 20px;
+.possible-notes .button{
+    border: 1px solid var(--dark-grey-color);
     background-color: var(--very-light-grey-color);
-    width: 960px;
+    border-radius: 3px;
+    cursor: pointer;
+    outline: none;
+    margin-right: 5px;
+    font-size: 17px;
+    padding: 5px 20px;
+    transition: .3s;
+}
+
+.possible-notes .button.active{
+    background-color: var(--blue-color);
+}
+
+.possible-notes .button:hover{
+    background-color: var(--light-grey-color);
+}
+
+.possible-notes .button.active:hover{
+    background-color: var(--blue-color);
 }
 
 @media screen and (max-width: 960px) {
-    .settings, .description, .transcript, .notes {
+    .settings, .description, .transcript, .notes, .possible-notes {
         width: auto;
         margin-left: 10px;
         margin-right: 10px;

@@ -34,12 +34,19 @@ let nextButton,
     notesElement,
     transcriptElement,
     pitchPlayingElement,
+    noteButtonsElement,
+    intervalButtonsElement,
     showFirstNoteInput,
+    randomScoreInput,
     numberNoteInput,
     lowestNoteInput,
     highestNoteInput,
     transposeInput,
-    playBackSpeedRange;
+    useRandomScores,
+    playBackSpeedRange,
+    selectedNotes,
+    selectedIntervals,
+    intervalsToSemiTones;
 
 window.onload = function () {
     // DOM elements
@@ -52,17 +59,25 @@ window.onload = function () {
     transcriptElement = document.getElementById("transcript");
     pitchPlayingElement = document.getElementById("pitch-playing")
     showFirstNoteInput = document.getElementById("show-first-notes");
+    randomScoreInput = document.getElementById("random-score");
     numberNoteInput = document.getElementById("number-notes");
     lowestNoteInput = document.getElementById("lowest-note");
     highestNoteInput = document.getElementById("highest-note");
     transposeInput = document.getElementById("transpose");
     playBackSpeedRange = document.getElementById("play-back-speed");
+    noteButtonsElement = document.getElementById("note-buttons");
+    intervalButtonsElement = document.getElementById("interval-buttons");
 
     showFirstNote = showFirstNoteInput.checked;
+    useRandomScores = randomScoreInput.checked;
     numberNotes = parseInt(numberNoteInput.value);
     highestNote = highestNoteInput.value;
     lowestNote = lowestNoteInput.value;
     transposeInstrument = transposeInput.value;
+
+    selectedNotes = {"C": true, "Db": false, "D": true, "Eb": false, "E": true, "F": true, "Gb": false, "G": true, "Ab": false, "A": true, "Bb": false, "B": true};
+    selectedIntervals = {"m2": true, "M2": true, "m3": false, "M3": false, "P4": true, "d5": false, "P5": true, "m6": false, "M6": false, "m7": false, "M7": false, "P8": true};
+    intervalsToSemiTones = {"m2": 1, "M2": 2, "m3": 3, "M3": 4, "P4": 5, "d5": 6, "P5": 7, "m6": 8, "M6": 9, "m7": 10, "M7": 11, "P8": 12};
 
 
     synth = new Tone.Sampler(Soundfont, function () {
@@ -109,6 +124,14 @@ window.onload = function () {
     if (localStorage.getItem("play-back-speed")) {
         playBackSpeed = localStorage.getItem("play-back-speed");
         playBackSpeedRange.value = playBackSpeed;
+    }
+
+    if (localStorage.getItem("selected-notes")) {
+        selectedNotes = JSON.parse(localStorage.getItem("selected-notes"));
+    }
+
+    if (localStorage.getItem("selected-intervals")) {
+        selectedIntervals = JSON.parse(localStorage.getItem("selected-intervals"));
     }
 
     recordButton.addEventListener("click", async function (e) {
@@ -174,6 +197,13 @@ window.onload = function () {
         }
     });
 
+    randomScoreInput.addEventListener("change", function (e) {
+        useRandomScores = e.target.checked;
+
+        showSolution = false;
+        generateScore();
+    });
+
     lowestNoteInput.addEventListener("change", function (e) {
         if (Object.keys(keyToNote).includes(e.target.value)) {
             lowestNote = e.target.value;
@@ -226,6 +256,82 @@ window.onload = function () {
         localStorage.setItem("play-back-speed", playBackSpeed);
     });
 
+
+    Object.entries(selectedNotes).forEach(([name, selected]) => {
+        let button = document.createElement("button");
+        button.innerHTML = name;
+        if(selected) {
+            button.classList.add('active');
+        }
+        button.classList.add("button");
+        button.addEventListener("click", clickNoteButton);
+        noteButtonsElement.appendChild(button);
+    });
+
+    Object.entries(selectedIntervals).forEach(([name, selected]) => {
+        let button = document.createElement("button");
+        button.innerHTML = name;
+        if(selected) {
+            button.classList.add('active');
+        }
+        button.classList.add("button");
+        button.addEventListener("click", clickIntervalButton);
+        intervalButtonsElement.appendChild(button);
+    });
+
+}
+
+function randomNoteSequence(notes, intervals, numNotes){
+    let lastNote = sample(notes);
+    let possibleFirstNotes = [];
+    for(let k = 0; k <= 7; k++){
+        if(keyToNote[lastNote + k.toString()] >= keyToNote[lowestNote] && keyToNote[lastNote + k.toString()] <= keyToNote[highestNote]) {
+            possibleFirstNotes.push(lastNote + k.toString())
+        }
+    }
+    lastNote = sample(possibleFirstNotes);
+    let noteSequence = [lastNote];
+
+    for(let k = 0; k < numNotes - 1; k++){
+        lastNote = sample(possibleNotesFromInterval(lastNote, intervals, notes))
+        noteSequence.push(lastNote);
+    }
+    return noteSequence;
+}
+
+function possibleNotesFromInterval(note, intervals, notes){
+    let possibleNextNotes = [];
+    for(let k = 0; k < intervals.length; k++){
+        let pitch = keyToNote[note] + intervalsToSemiTones[intervals[k]];
+        if(pitch <= keyToNote[highestNote] && notes.indexOf(noteToKey[pitch].slice(0, -1)) >= 0){
+            possibleNextNotes.push(noteToKey[pitch]);
+        }
+        pitch = keyToNote[note] - intervalsToSemiTones[intervals[k]];
+        if(pitch >= keyToNote[lowestNote] && notes.indexOf(noteToKey[pitch].slice(0, -1)) >= 0){
+            possibleNextNotes.push(noteToKey[pitch]);
+        }
+    }
+    return possibleNextNotes;
+}
+
+function clickNoteButton(e) {
+    e.preventDefault();
+    const note = e.target.innerHTML;
+    if(note in selectedNotes){
+        e.target.classList.toggle("active");
+        selectedNotes[note] = !selectedNotes[note];
+    }
+    localStorage.setItem("selected-notes", JSON.stringify(selectedNotes));
+}
+
+function clickIntervalButton(e) {
+    e.preventDefault();
+    const note = e.target.innerHTML;
+    if(note in selectedIntervals){
+        e.target.classList.toggle("active");
+        selectedIntervals[note] = !selectedIntervals[note];
+    }
+    localStorage.setItem("selected-intervals", JSON.stringify(selectedIntervals));
 }
 
 function sleep(ms) {
@@ -322,37 +428,45 @@ function generateScore() {
     recordButton.classList.remove('active')
     playButton.classList.add('loading')
     recordButton.classList.add('loading')
-    let validTune = false;
-    const range = keyToNote[highestNote] - keyToNote[lowestNote];
-    let minVal, maxVal;
-    while (!validTune) {
-        const tune = sample(scores).notes;
-        const musicStart = Math.floor(Math.random() * (tune.length - numberNotes));
+    if(useRandomScores) {
+        generatedScore = randomNoteSequence(
+            Object.keys(selectedNotes).filter(note => selectedNotes[note]),
+            Object.keys(selectedIntervals).filter(interval => selectedIntervals[interval]),
+            numberNotes
+        )
+    } else {
+        let validTune = false;
+        const range = keyToNote[highestNote] - keyToNote[lowestNote];
+        let minVal, maxVal;
+        while (!validTune) {
+            const tune = sample(scores).notes;
+            const musicStart = Math.floor(Math.random() * (tune.length - numberNotes));
 
-        generatedScore = tune.slice(musicStart, musicStart + numberNotes);
-        generatedScore = generatedScore.map(function (n) {
-            return noteToKey[n];
-        });
+            generatedScore = tune.slice(musicStart, musicStart + numberNotes);
+            generatedScore = generatedScore.map(function (n) {
+                return noteToKey[n];
+            });
 
 
-        const scoreValues = generatedScore.map(function (note) {
-            return keyToNote[note];
-        });
-        minVal = Math.min.apply(Math, scoreValues);
-        maxVal = Math.max.apply(Math, scoreValues);
+            const scoreValues = generatedScore.map(function (note) {
+                return keyToNote[note];
+            });
+            minVal = Math.min.apply(Math, scoreValues);
+            maxVal = Math.max.apply(Math, scoreValues);
 
-        // Tune is valid if the difference between highest and lowest is smaller than instrument range.
-        if (maxVal - minVal <= range) {
-            validTune = true;
+            // Tune is valid if the difference between highest and lowest is smaller than instrument range.
+            if (maxVal - minVal <= range) {
+                validTune = true;
+            }
         }
+        // Then transpose score to have a real random first note.
+        // We transpose from the lowest note in the score.
+        // Random note can be from lowest instrument note, to highest minus range of the score
+        const newLowestNote = randInt(keyToNote[lowestNote], keyToNote[highestNote] - (maxVal - minVal));
+        // transpose song for new lowest note
+        const shift = newLowestNote - minVal;
+        generatedScore = transposeByShift(generatedScore, shift);
     }
-    // Then transpose score to have a real random first note.
-    // We transpose from the lowest note in the score.
-    // Random note can be from lowest instrument note, to highest minus range of the score
-    const newLowestNote = randInt(keyToNote[lowestNote], keyToNote[highestNote] - (maxVal - minVal));
-    // transpose song for new lowest note
-    const shift = newLowestNote - minVal;
-    generatedScore = transposeByShift(generatedScore, shift);
 
     generatedScoreTransposed = transpose(generatedScore);
 

@@ -20,6 +20,7 @@ if __name__ == "__main__":
         for msg in midi_file:
             if msg.type == "note_on":
                 song_notes.append(msg.note)
+
         files.append({
             "name": midi_file_path.stem,
             "notes": song_notes
