@@ -550,13 +550,13 @@ function drawScore(notes) {
             const n = note.slice(0, -1) + "/" + note.slice(-1);
             const rootNote = note.slice(0, 1);
             let staveNote = new VF.StaveNote({clef: clef, keys: [n], duration: "q"})
-            if (note.slice(1, 2) === "#" && accidentals[rootNote] !== "#") {
+            if (note.slice(1, 2) === "#") {
                 accidentals[rootNote] = "#";
                 staveNote = staveNote.addAccidental(0, new VF.Accidental("#"));
-            } else if (note.slice(1, 2) === "b" && accidentals[rootNote] !== "b") {
+            } else if (note.slice(1, 2) === "b") {
                 accidentals[rootNote] = "b";
                 staveNote = staveNote.addAccidental(0, new VF.Accidental("b"));
-            } else if (accidentals[rootNote]) {
+            } else if (note.slice(1, 2) !== "#" && note.slice(1, 2) !== "b" && accidentals[rootNote]) {
                 delete accidentals[rootNote];
                 staveNote = staveNote.addAccidental(0, new VF.Accidental("n"));
             }
