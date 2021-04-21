@@ -2,7 +2,7 @@ const localStorage = window.localStorage;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
 const VF = Vex.Flow;
-const langFile = "lang/en.json";
+const langFile = "lang/fr.json";
 let lang;
 let pitchAnalyzer;
 let mediaStreamSource;
@@ -94,6 +94,7 @@ window.onload = function () {
             Object.entries(selectedNotes).forEach(([name, selected]) => {
                 let button = document.createElement("button");
                 button.innerHTML = lang["notes"][name];
+                button.setAttribute("name", name);
                 if(selected) {
                     button.classList.add('active');
                 }
@@ -105,6 +106,7 @@ window.onload = function () {
             Object.entries(selectedIntervals).forEach(([name, selected]) => {
                 let button = document.createElement("button");
                 button.innerHTML = name;
+                button.setAttribute("name", name);
                 if(selected) {
                     button.classList.add('active');
                 }
@@ -112,8 +114,6 @@ window.onload = function () {
                 button.addEventListener("click", clickIntervalButton);
                 intervalButtonsElement.appendChild(button);
             });
-
-            console.log(lang)
         })
         .catch(function (err) {
             console.log(err);
@@ -334,7 +334,7 @@ function possibleNotesFromInterval(note, intervals, notes){
 
 function clickNoteButton(e) {
     e.preventDefault();
-    const note = e.target.innerHTML;
+    const note = e.target.getAttribute("name");
     if(note in selectedNotes){
         e.target.classList.toggle("active");
         selectedNotes[note] = !selectedNotes[note];
@@ -344,7 +344,7 @@ function clickNoteButton(e) {
 
 function clickIntervalButton(e) {
     e.preventDefault();
-    const note = e.target.innerHTML;
+    const note = e.target.getAttribute("name");
     if(note in selectedIntervals){
         e.target.classList.toggle("active");
         selectedIntervals[note] = !selectedIntervals[note];
