@@ -2,6 +2,8 @@ const localStorage = window.localStorage;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 const audioContext = new AudioContext();
 const VF = Vex.Flow;
+const langFile = "lang/en.json";
+let lang;
 let pitchAnalyzer;
 let mediaStreamSource;
 let mediaStream;
@@ -78,6 +80,44 @@ window.onload = function () {
     selectedNotes = {"C": true, "Db": false, "D": true, "Eb": false, "E": true, "F": true, "Gb": false, "G": true, "Ab": false, "A": true, "Bb": false, "B": true};
     selectedIntervals = {"m2": true, "M2": true, "m3": false, "M3": false, "P4": true, "d5": false, "P5": true, "m6": false, "M6": false, "m7": false, "M7": false, "P8": true};
     intervalsToSemiTones = {"m2": 1, "M2": 2, "m3": 3, "M3": 4, "P4": 5, "d5": 6, "P5": 7, "m6": 8, "M6": 9, "m7": 10, "M7": 11, "P8": 12};
+
+    fetch(langFile)
+        .then(async function (resp) {
+            lang = await resp.json();
+            Object.entries(lang).forEach(([id, content]) => {
+                const elem = document.getElementById("lang-" + id);
+                if(elem) {
+                    elem.innerHTML = content;
+                }
+            });
+
+            Object.entries(selectedNotes).forEach(([name, selected]) => {
+                let button = document.createElement("button");
+                button.innerHTML = lang["notes"][name];
+                if(selected) {
+                    button.classList.add('active');
+                }
+                button.classList.add("button");
+                button.addEventListener("click", clickNoteButton);
+                noteButtonsElement.appendChild(button);
+            });
+
+            Object.entries(selectedIntervals).forEach(([name, selected]) => {
+                let button = document.createElement("button");
+                button.innerHTML = name;
+                if(selected) {
+                    button.classList.add('active');
+                }
+                button.classList.add("button");
+                button.addEventListener("click", clickIntervalButton);
+                intervalButtonsElement.appendChild(button);
+            });
+
+            console.log(lang)
+        })
+        .catch(function (err) {
+            console.log(err);
+        });
 
 
     synth = new Tone.Sampler(Soundfont, function () {
@@ -256,28 +296,6 @@ window.onload = function () {
         localStorage.setItem("play-back-speed", playBackSpeed);
     });
 
-
-    Object.entries(selectedNotes).forEach(([name, selected]) => {
-        let button = document.createElement("button");
-        button.innerHTML = name;
-        if(selected) {
-            button.classList.add('active');
-        }
-        button.classList.add("button");
-        button.addEventListener("click", clickNoteButton);
-        noteButtonsElement.appendChild(button);
-    });
-
-    Object.entries(selectedIntervals).forEach(([name, selected]) => {
-        let button = document.createElement("button");
-        button.innerHTML = name;
-        if(selected) {
-            button.classList.add('active');
-        }
-        button.classList.add("button");
-        button.addEventListener("click", clickIntervalButton);
-        intervalButtonsElement.appendChild(button);
-    });
 
 }
 

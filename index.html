@@ -9,16 +9,16 @@
 <body>
 
 <div class="header">
-    Ear Trainer <i class="fas fa-music"></i>
+    <span id="lang-title"></span> <i class="fas fa-music"></i>
 </div>
 
-<button id="stop-record" class="stop-record hidden"><i class="fas fa-microphone-slash"></i><span>Stop session</span></button>
+<button id="stop-record" class="stop-record hidden"><i class="fas fa-microphone-slash"></i><span id="lang-stopSession"></span></button>
 
 <div class="actions">
-    <button id="next" class="loading">Next <br> <i class="fas fa-step-forward"></i></button>
-    <button id="play" class="loading">Play <br> <i class="fas fa-play"></i></button>
-    <button id="record" class="loading">Record <br><i class="fas fa-microphone"></i></button>
-    <button id="answer" class="loading">Answer <br> <i class="far fa-eye"></i></button>
+    <button id="next" class="loading"><span id="lang-next"></span> <br> <i class="fas fa-step-forward"></i></button>
+    <button id="play" class="loading"><span id="lang-play"></span> <br> <i class="fas fa-play"></i></button>
+    <button id="record" class="loading"><span id="lang-record"></span> <br><i class="fas fa-microphone"></i></button>
+    <button id="answer" class="loading"><span id="lang-answer"></span> <br> <i class="far fa-eye"></i></button>
 </div>
 
 <ul class="notes" id="notes"></ul>
@@ -30,70 +30,50 @@
 <div class="transcript hidden" id="transcript"></div>
 
 <div class="settings">
-    <h2><i class="fas fa-wrench"></i> Settings</h2>
+    <h2><i class="fas fa-wrench"></i> <span id="lang-settings"></span></h2>
     <div class="option">
-        <label for="number-notes">Number of notes: <input type="number" id="number-notes" value="3" min="1" max="10"/></label>
+        <label for="number-notes"><span id="lang-numberNotes"></span> <input type="number" id="number-notes" value="3" min="1" max="10"/></label>
     </div>
     <div class="option">
-        <label for="play-back-speed">Note duration (ms) <input type="number" min="100" max="5000" value="700" id="play-back-speed"></label>
+        <label for="play-back-speed"><span id="lang-noteDuration"></span> <input type="number" min="100" max="5000" value="700" id="play-back-speed"></label>
 
     </div>
     <div class="option">
-        <label for="show-first-notes">Show first note: <input type="checkbox" id="show-first-notes" checked/></label>
+        <label for="show-first-notes"><span id="lang-showFirstNote"></span> <input type="checkbox" id="show-first-notes" checked/></label>
     </div>
     <div class="option">
-        <label for="lowest-note">Lowest note: <input type="text" id="lowest-note" value="C3"/></label>
+        <label for="lowest-note"><span id="lang-lowestNote"></span> <input type="text" id="lowest-note" value="C3"/></label>
     </div>
     <div class="option">
-        <label for="highest-note">Highest note: <input type="text" id="highest-note" value="C6"/></label>
+        <label for="highest-note"><span id="lang-highestNote"></span> <input type="text" id="highest-note" value="C6"/></label>
     </div>
     <div class="option">
-        <label for="transpose">Transpose: C4 <i class="fas fa-long-arrow-alt-left"></i> <input type="text" id="transpose" value="C4"/></label>
+        <label for="transpose"><span id="lang-transpose"></span> <i class="fas fa-long-arrow-alt-left"></i> <input type="text" id="transpose" value="C4"/></label>
     </div>
     <div class="option">
-        <label for="random-score">Generate random score: <input type="checkbox" id="random-score" checked/></label>
+        <label for="random-score"><span id="lang-randomScore"></span> <input type="checkbox" id="random-score" checked/></label>
     </div>
 </div>
 
 <div class="possible-notes">
-    <p>
-        Only used if the score is randomly generated.
-    </p>
-    <h2><i class="fas fa-music"></i> Possible notes</h2>
+    <p id="lang-possibleNotesIntro"></p>
+    <h2><i class="fas fa-music"></i> <span id="lang-possibleNotes"></span></h2>
 
     <div id="note-buttons"></div>
 
-    <h2><i class="fas fa-arrows-alt-h"></i> Possible intervals</h2>
+    <h2><i class="fas fa-arrows-alt-h"></i> <span id="lang-possibleIntervals"></span></h2>
     <div id="interval-buttons"></div>
     <ul>
-        <li>m: minor</li>
-        <li>M: major</li>
-        <li>P: perfect</li>
-        <li>d: diminished</li>
+        <li><span id="lang-minor"></span></li>
+        <li><span id="lang-major"></span></li>
+        <li><span id="lang-perfect"></span></li>
+        <li><span id="lang-diminished"></span></li>
     </ul>
 </div>
 
 <div class="description">
-    <h2><i class="fas fa-question-circle"></i>  Guide</h2>
-    <p>
-        Train yourself playing your instrument by ear.
-    </p>
-    <p>
-        Click on "play" to start the melody, then try reproducing with you instrument.
-    </p>
-    <p>
-        Once succeeded, try another excerpt by clicking "next".
-    </p>
-
-    <p>
-        If your instrument is not in concert pitch, you can change it in the transpose input. (Example "Bb3" for Bb instruments).
-    </p>
-    <p>
-        You can set the range of your instrument by changing the lowest and highest notes.
-        You can refer to: <a href="https://en.wikipedia.org/wiki/Scientific_pitch_notation">https://en.wikipedia.org/wiki/Scientific_pitch_notation</a>
-        for pitch names.
-    </p>
-
+    <h2><i class="fas fa-question-circle"></i>  <span id="lang-guide"></span></h2>
+    <div id="lang-guideContent"></div>
 </div>
 
 <div class="description">
