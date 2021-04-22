@@ -21,7 +21,7 @@
   "perfect": "P : parfait",
   "diminished": "d : diminué",
   "guide": "Guide",
-  "guideContent": "<p>Cliquer sur \"Jouer\" pour écouter une mélodie, puis essayer de reproduire avec l'instrument.</p><p>Une fois réussi, essayer un nouveau passage en cliquant sur \"suivant\".</p><p>Si l'instrument est transpositeur, utiliser le champs \"transposer\". (Exemple \"Bb3\" pour les instruments Sib).</p><p>La tessiture de l'instrument peut être adaptée en changeant la note la plus basse et celle la plus haute. La notation internationale des notes est utilisée (voir : <a href=\"https://en.wikipedia.org/wiki/Scientific_pitch_notation\">https://en.wikipedia.org/wiki/Scientific_pitch_notation</a> pour plus d'infos).</p>",
+  "guideContent": "<p>Cliquer sur \"Jouer\" pour écouter une mélodie, puis essayer de la reproduire avec l'instrument.</p><p>Une fois réussi, essayer un nouveau passage en cliquant sur \"suivant\".</p><p>Si l'instrument est transpositeur, utiliser le champ de saisie \"transposer\". (Exemple \"Bb3\" pour les instruments Sib).</p><p>La tessiture de l'instrument peut être adaptée en changeant la note la plus basse et celle la plus haute.</p><p>La notation internationale des notes est celle utilisée pour les paramètres (voir : <a href=\"https://en.wikipedia.org/wiki/Scientific_pitch_notation\">https://en.wikipedia.org/wiki/Scientific_pitch_notation</a> pour plus d'informations).</p>",
 
   "notes": {
     "A": "la",
