@@ -20,6 +20,7 @@ let lowestNote;
 let transposeInstrument;
 let noteBullets = [];
 let scores;
+let presets;
 let lastRecordedNote;
 let itemLastCorrectRecordedNote = -1;
 let playBackSpeed = 500;
@@ -33,6 +34,7 @@ let nextButton,
     answerButton,
     recordButton,
     stopRecordButton,
+    instrumentSelect,
     notesElement,
     transcriptElement,
     pitchPlayingElement,
@@ -57,6 +59,7 @@ window.onload = function () {
     answerButton = document.getElementById("answer");
     recordButton = document.getElementById("record");
     stopRecordButton = document.getElementById("stop-record");
+    instrumentSelect = document.getElementById("instrument_presets");
     notesElement = document.getElementById("notes");
     transcriptElement = document.getElementById("transcript");
     pitchPlayingElement = document.getElementById("pitch-playing")
@@ -114,11 +117,35 @@ window.onload = function () {
                 button.addEventListener("click", clickIntervalButton);
                 intervalButtonsElement.appendChild(button);
             });
+
+            fetch("presets.json")
+                .then(async function (resp) {
+                    presets = await resp.json();
+
+                    let option = document.createElement("option");
+                    option.value = "-1";
+                    option.innerHTML = "--";
+                    instrumentSelect.appendChild(option);
+
+                    presets.forEach((preset, k) => {
+                        const {name, lowestNote, highestNote, transpose} = preset;
+                        let option = document.createElement("option");
+                        option.value = k;
+                        option.innerHTML = lang["instrumentNames"][name];
+                        instrumentSelect.appendChild(option);
+                    });
+                })
+                .catch(function (err) {
+                    console.log(err);
+                });
+
+
         })
         .catch(function (err) {
             console.log(err);
         });
 
+    instrumentSelect.addEventListener("change", clickOnInstrumentPreset);
 
     synth = new Tone.Sampler(Soundfont, function () {
         // Get the scores
@@ -297,6 +324,32 @@ window.onload = function () {
     });
 
 
+}
+
+function clickOnInstrumentPreset(e) {
+    if(0 <= e.target.value < presets.length) {
+        const {name, lowestNote, highestNote, transpose} = presets[e.target.value];
+
+        // Lowest note
+        if (Object.keys(keyToNote).includes(lowestNote)) {
+            localStorage.setItem("lowest-note", lowestNote);
+            lowestNoteInput.value = lowestNote;
+        }
+
+        // Highest note
+        if (Object.keys(keyToNote).includes(highestNote)) {
+            localStorage.setItem("highest-note", highestNote);
+            highestNoteInput.value = highestNote;
+        }
+        // Transpose
+        if (Object.keys(keyToNote).includes(transpose)) {
+            localStorage.setItem("transpose", transpose);
+            transposeInput.value = transpose;
+            generatedScoreTransposed = transpose(generatedScore);
+        }
+    }
+
+    // console.log();
 }
 
 function randomNoteSequence(notes, intervals, numNotes){

@@ -6,6 +6,7 @@
   "record": "Record",
   "answer": "Answer",
   "settings": "Settings",
+  "instruments": "Instrument:",
   "numberNotes": "Number of notes:",
   "noteDuration": "Note duration (ms):",
   "showFirstNote": "Show first note:",

@@ -6,6 +6,7 @@
   "record": "Enregistrer",
   "answer": "Réponse",
   "settings": "Paramètres",
+  "instruments": "Instrument :",
   "numberNotes": "Nombre de notes :",
   "noteDuration": "Longueur des notes (ms) :",
   "showFirstNote": "Afficher la première note :",
@@ -36,5 +37,13 @@
     "F": "fa",
     "G": "sol",
     "Gb": "solb"
+  },
+
+  "instrumentNames": {
+    "Piano": "Piano",
+    "Bb Clarinet": "Clarinette en sib",
+    "A Clarinet": "Clarinette en la",
+    "Eb Clarinet": "Clarinette en mib",
+    "Bass Clarinet": "Clarinette basse"
   }
 }
