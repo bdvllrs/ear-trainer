@@ -126,9 +126,10 @@ window.onload = function () {
                     option.value = "-1";
                     option.innerHTML = "--";
                     instrumentSelect.appendChild(option);
+                    instrumentSelect.value = "-1";
 
                     presets.forEach((preset, k) => {
-                        const {name, lowestNote, highestNote, transpose} = preset;
+                        const {name, lowestNote, highestNote, transposition} = preset;
                         let option = document.createElement("option");
                         option.value = k;
                         option.innerHTML = lang["instrumentNames"][name];
@@ -328,7 +329,7 @@ window.onload = function () {
 
 function clickOnInstrumentPreset(e) {
     if(0 <= e.target.value < presets.length) {
-        const {name, lowestNote, highestNote, transpose} = presets[e.target.value];
+        const {name, lowestNote, highestNote, transposition} = presets[e.target.value];
 
         // Lowest note
         if (Object.keys(keyToNote).includes(lowestNote)) {
@@ -342,10 +343,12 @@ function clickOnInstrumentPreset(e) {
             highestNoteInput.value = highestNote;
         }
         // Transpose
-        if (Object.keys(keyToNote).includes(transpose)) {
-            localStorage.setItem("transpose", transpose);
-            transposeInput.value = transpose;
+        if (Object.keys(keyToNote).includes(transposition)) {
+            localStorage.setItem("transpose", transposition);
+            transposeInput.value = transposition;
             generatedScoreTransposed = transpose(generatedScore);
+
+            e.target.value = "-1";
         }
     }
 
