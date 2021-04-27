@@ -3,30 +3,30 @@
     "name": "Piano",
     "lowestNote": "A0",
     "highestNote": "C8",
-    "transpose": "C4"
+    "transposition": "C4"
   },
   {
     "name": "Bb Clarinet",
     "lowestNote": "E3",
     "highestNote": "G6",
-    "transpose": "Bb3"
+    "transposition": "Bb3"
   },
   {
     "name": "A Clarinet",
     "lowestNote": "E3",
     "highestNote": "G6",
-    "transpose": "A3"
+    "transposition": "A3"
   },
   {
     "name": "Eb Clarinet",
     "lowestNote": "E3",
     "highestNote": "G6",
-    "transpose": "Eb4"
+    "transposition": "Eb4"
   },
   {
     "name": "Bass Clarinet",
     "lowestNote": "C3",
     "highestNote": "G6",
-    "transpose": "Bb2"
+    "transposition": "Bb2"
   }
 ]
