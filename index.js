@@ -29,6 +29,7 @@ let synth;
 let generatedScore = [];
 let generatedScoreTransposed = [];
 let midiLoaded = false;
+let currentScoreId;
 let nextButton,
     playButton,
     answerButton,
@@ -307,14 +308,15 @@ window.onload = function () {
         answerButton.classList.add('loading')
         resetDrawValidRecordedNotes();
         await generateScore();
-        await playExcerpt();
-        answerButton.classList.remove('loading')
+        currentScoreId = Date.now();
+        await playExcerpt(currentScoreId);
+        answerButton.classList.remove('loading');
     });
 
     playButton.addEventListener("click", async function (e) {
         if (!playing) {
             answerButton.classList.add('loading')
-            await playExcerpt();
+            await playExcerpt(currentScoreId);
             answerButton.classList.remove('loading')
         }
     });
@@ -569,7 +571,7 @@ function addNoteElements() {
         let li = document.createElement("li");
         li.addEventListener("click", async function() {
             if (!playing) {
-                await playExcerpt(k);
+                await playExcerpt(currentScoreId, k);
             }
         });
         notesElement.appendChild(li);
@@ -657,7 +659,7 @@ function drawScore(notes) {
     }
 }
 
-async function playExcerpt(startNote=0) {
+async function playExcerpt(playedScoreId, startNote=0) {
     if (startNote >= generatedScore.length) startNote = 0;
     itemLastCorrectRecordedNote = -1;
     pitchPlayingElement.innerHTML = "";
@@ -667,21 +669,25 @@ async function playExcerpt(startNote=0) {
     recordButton.classList.add('loading')
     playButton.classList.add('loading')
     for (let k = startNote; k < generatedScore.length; k++) {
-        let note = generatedScore[k]
-        noteBullets[k].classList.add('active');
-        synth.triggerAttackRelease(note, 0.8 * playBackSpeed / 1000);
-        await sleep(playBackSpeed);
-        noteBullets[k].classList.remove('active');
+        if(playedScoreId === currentScoreId) {
+            let note = generatedScore[k]
+            noteBullets[k].classList.add('active');
+            synth.triggerAttackRelease(note, 0.8 * playBackSpeed / 1000);
+            await sleep(playBackSpeed);
+            noteBullets[k].classList.remove('active');
+        }
     }
-    playing = false;
-    played = true;
-    playButton.classList.remove('loading')
-    recordButton.classList.remove('loading')
-    if (recordAfterPlaying) {
-        recordButton.classList.add('active')
-        await audioContext.resume();
-        isRecording = true;
-        await updatePitch();
+    if(playedScoreId === currentScoreId) {
+        playing = false;
+        played = true;
+        playButton.classList.remove('loading')
+        recordButton.classList.remove('loading')
+        if (recordAfterPlaying) {
+            recordButton.classList.add('active')
+            await audioContext.resume();
+            isRecording = true;
+            await updatePitch();
+        }
     }
 }
 
