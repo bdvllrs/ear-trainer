@@ -349,8 +349,6 @@ function clickOnInstrumentPreset(e) {
             localStorage.setItem("transpose", transposition);
             transposeInput.value = transposition;
             generatedScoreTransposed = transpose(generatedScore);
-
-            e.target.value = "-1";
         }
     }
 
